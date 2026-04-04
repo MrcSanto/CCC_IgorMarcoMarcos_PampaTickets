@@ -1,0 +1,45 @@
+[project]
+name = "pampatickets-backend"
+version = "0.1.0"
+description = "Plataforma digital de gerenciamento de eventos e venda de ingressos"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # Web framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    # ORM e banco de dados
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "psycopg2-binary>=2.9.0",
+    # Validação e serialização
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    # Autenticação JWT
+    "pyjwt>=2.8.0",
+    "passlib[bcrypt]>=1.7.4",
+    # Geração de PDF
+    "reportlab>=4.2.0",
+    "qrcode[pil]>=7.4.0",
+    "pillow>=10.3.0",
+    # Supabase Storage
+    "supabase>=2.4.0",
+    # Requisições HTTP (Asaas + Meta Cloud API)
+    "httpx>=0.27.0",
+    # Utilitários
+    "python-multipart>=0.0.9",
+    "python-dotenv>=1.0.0",
+    "asyncpg>=0.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.9",
+]

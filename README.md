@@ -25,14 +25,14 @@ git clone <url-do-repositorio>
 cd pampatickets
 
 # 2. Configure as variáveis de ambiente
-cp .env.example backend/.env
-# edite backend/.env com suas credenciais
+cp .env.example ./.env
+# edite .env com suas credenciais
 
-# 3. Instale as dependências
-make install
+# 3. Build da imagem
+make build
 
-# 4. Sobe o banco e inicia o servidor
-make dev
+# 4. Inicia os serviços 
+make up
 ```
 
 A API estará disponível em `http://localhost:8000` e a documentação em `http://localhost:8000/docs`.
@@ -41,7 +41,10 @@ A API estará disponível em `http://localhost:8000` e a documentação em `http
 
 | Comando | Descrição |
 |---|---|
-| `make dev` | Inicia o servidor com hot-reload |
+| `make build` | Builda a imagem da API |
+| `make up` | Sobe todos os serviços em background | 
+| `make rebuild` | Restarta os containeres |
+| `make down` | Para e remove os containers | 
 | `make migrate` | Aplica migrações pendentes |
 | `make migration m="mensagem"` | Cria uma nova migração |
 | `make test` | Executa os testes |

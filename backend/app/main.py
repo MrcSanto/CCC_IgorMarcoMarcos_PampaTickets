@@ -3,6 +3,7 @@ from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI
 
+from app.api.routes import auth
 from app.db.session import init_db
 
 
@@ -16,6 +17,8 @@ app = FastAPI(
     title="PampaTickets API",
     lifespan=lifespan,
 )
+
+app.include_router(auth.router, prefix="/api")
 
 
 @app.get("/", tags=["Health Check"])

@@ -2,7 +2,16 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -18,7 +27,9 @@ class Lote(Base):
     __tablename__ = "lotes_ingresso"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    evento_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("eventos.id"), nullable=False)
+    evento_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("eventos.id"), nullable=False
+    )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     tipo: Mapped[TipoLote] = mapped_column(Enum(TipoLote), nullable=False)
     preco: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
@@ -27,4 +38,6 @@ class Lote(Base):
     data_inicio_venda: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     data_fim_venda: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )

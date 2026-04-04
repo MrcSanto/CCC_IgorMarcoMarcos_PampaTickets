@@ -1,0 +1,64 @@
+from datetime import datetime, timedelta, timezone
+
+import bcrypt
+import jwt
+from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.config import settings
+from app.models.usuario import Usuario
+from app.repositories import usuario_repo
+from app.schemas.usuario import CadastroRequest, LoginRequest
+
+
+def _hash_senha(senha: str) -> str:
+    return bcrypt.hashpw(senha[:72].encode(), bcrypt.gensalt()).decode()
+
+
+def _verificar_senha(senha: str, senha_hash: str) -> bool:
+    return bcrypt.checkpw(senha[:72].encode(), senha_hash.encode())
+
+
+def _gerar_token(usuario_id: str) -> str:
+    expiracao = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    payload = {"sub": usuario_id, "exp": expiracao}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+async def cadastrar(db: AsyncSession, data: CadastroRequest) -> Usuario:
+    existente = await usuario_repo.get_by_email(db, data.email)
+    if existente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="E-mail já cadastrado.",
+        )
+
+    return await usuario_repo.create(
+        db,
+        nome=data.nome,
+        celular=data.celular,
+        email=data.email,
+        senha_hash=_hash_senha(data.senha),
+        perfil=data.perfil,
+    )
+
+
+async def login(db: AsyncSession, data: LoginRequest) -> tuple[str, Usuario]:
+    usuario = await usuario_repo.get_by_email(db, data.email)
+
+    if not usuario or not _verificar_senha(data.senha, usuario.senha_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha inválidos.",
+        )
+
+    if not usuario.ativo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Conta desativada.",
+        )
+
+    token = _gerar_token(str(usuario.id))
+    return token, usuario

@@ -19,7 +19,10 @@ class Usuario(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    celular: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     perfil: Mapped[PerfilUsuario] = mapped_column(Enum(PerfilUsuario), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
+    )

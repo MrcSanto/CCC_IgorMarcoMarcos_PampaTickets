@@ -6,24 +6,19 @@ BACKEND_DIR := backend
 help:
 	@echo "Comandos disponíveis:"
 	@echo ""
-	@echo "  Desenvolvimento"
-	@echo "  ---------------"
-	@echo "  install              Instala dependências do backend"
-	@echo "  dev                  Inicia o servidor local com hot-reload"
-	@echo ""
 	@echo "  Docker"
 	@echo "  ------"
 	@echo "  build                Builda a imagem da API"
 	@echo "  up                   Sobe todos os serviços em background"
 	@echo "  down                 Para e remove os containers"
 	@echo "  restart              Reinicia todos os serviços"
+	@echo "  rebuild              Rebuilda todos os serviços"
 	@echo "  logs                 Exibe logs de todos os serviços"
 	@echo "  logs-api             Exibe logs da API"
 	@echo "  logs-db              Exibe logs do banco de dados"
 	@echo "  ps                   Lista os containers em execução"
 	@echo "  shell-api            Abre shell no container da API"
 	@echo "  shell-db             Abre psql no container do banco"
-	@echo "  destroy              Para containers, remove volumes e .venv"
 	@echo ""
 	@echo "  Migrações"
 	@echo "  ---------"
@@ -38,14 +33,6 @@ help:
 	@echo "  lint                 Verifica o código com ruff"
 	@echo "  format               Formata o código com ruff"
 
-# --- Desenvolvimento ---
-
-install:
-	cd $(BACKEND_DIR) && uv sync
-
-dev:
-	cd $(BACKEND_DIR) && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
 # --- Docker ---
 
 build:
@@ -59,6 +46,9 @@ down:
 
 restart:
 	$(DC) restart
+
+rebuild:
+	$(DC) down && $(DC) build
 
 logs:
 	$(DC) logs -f
@@ -77,10 +67,6 @@ shell-api:
 
 shell-db:
 	$(DC) exec db psql -U $${POSTGRES_USER:-pampa} -d $${POSTGRES_DB:-pampatickets}
-
-destroy:
-	$(DC) down -v --remove-orphans
-	rm -rf $(BACKEND_DIR)/.venv
 
 # --- Migrações ---
 

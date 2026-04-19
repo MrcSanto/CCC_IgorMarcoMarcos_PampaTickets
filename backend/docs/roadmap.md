@@ -21,6 +21,16 @@
 Sandbox gratuito para testes: `https://sandbox.asaas.com/api/v3`
 Documentação: https://docs.asaas.com
 
+> **Onde fica o código:** toda chamada HTTP ao Asaas fica em [`app/integrations/asaas/`](../app/integrations/asaas/). A lógica de negócio (quando criar cobrança, orquestrar webhook → PDF → WhatsApp) fica em `service/pagamento_service.py` e `service/webhook_service.py`. Ver [requirements.md](requirements.md#camada-integrations--chamadas-a-apis-externas).
+
+### Pré-requisito: cliente no Asaas
+
+Toda cobrança no Asaas exige um `customer_id`. O fluxo é:
+
+1. No primeiro pagamento do usuário, `pagamento_service` chama `integrations/asaas/customers.create_customer` com nome, email e CPF.
+2. O `customer_id` retornado é persistido em `usuarios.asaas_customer_id`.
+3. Nas próximas compras, reutilizar o `asaas_customer_id` — nunca recriar.
+
 ### Métodos de pagamento suportados
 - Pix (preferencial)
 - Boleto bancário

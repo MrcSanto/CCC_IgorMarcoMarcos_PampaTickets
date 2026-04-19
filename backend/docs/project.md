@@ -111,14 +111,29 @@ pampatickets/
 │   │   ├── evento_service.py
 │   │   ├── ingresso_service.py
 │   │   ├── pedido_service.py
-│   │   ├── pagamento_service.py       # Integração com Asaas
-│   │   ├── webhook_service.py         # Processamento de webhooks do Asaas
-│   │   ├── whatsapp_service.py        # Integração com Meta Cloud API
+│   │   ├── pagamento_service.py       # Orquestra fluxo de cobrança (usa integrations/asaas)
+│   │   ├── webhook_service.py         # Processa webhooks do Asaas
+│   │   ├── whatsapp_service.py        # Orquestra notificações (usa integrations/whatsapp)
 │   │   ├── cupom_service.py
 │   │   ├── cortesia_service.py
 │   │   ├── checkin_service.py
 │   │   ├── relatorio_service.py       # Coordena geração assíncrona de PDFs
 │   │   └── galeria_service.py         # Baixa prioridade
+│   ├── integrations/                  # Clientes HTTP de APIs externas — sem regra de negócio
+│   │   ├── __init__.py
+│   │   ├── asaas/
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py              # httpx.AsyncClient + auth/timeout
+│   │   │   ├── customers.py           # create_customer, get_customer
+│   │   │   ├── payments.py            # create_payment, refund_payment
+│   │   │   ├── exceptions.py          # AsaasAPIError
+│   │   │   └── schemas.py             # DTOs Pydantic do Asaas
+│   │   ├── supabase/
+│   │   │   ├── __init__.py
+│   │   │   └── storage.py             # upload/download e URLs assinadas
+│   │   └── whatsapp/
+│   │       ├── __init__.py
+│   │       └── meta.py                # envio de mensagens via Meta Cloud API
 │   ├── reports/
 │   │   ├── __init__.py
 │   │   ├── ingresso_pdf.py            # UC12

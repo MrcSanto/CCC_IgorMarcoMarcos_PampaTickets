@@ -50,7 +50,9 @@ Desenvolver o UC02, e UC03
 - **Onboarding local**: padronizado via `make build` + `make up` (substituiu `make install/migrate/dev` no README).
 - **Arquitetura em camadas**: `models` → `repositories` → `services` → `routers`, usando SQLAlchemy `AsyncSession`.
 - **Convenção de imports** nos repositórios: ordem alfabética (ex.: `PerfilUsuario, Usuario`).
-- **Endpoints públicos**: apenas cadastro, login e listagem pública de eventos.
+- **Endpoints públicos**: apenas cadastro, login, listagem pública de eventos e webhook do Asaas.
+- **Camada `integrations/`** (18/04/2026): chamadas HTTP a APIs externas (Asaas, Supabase, Meta) ficam isoladas em `app/integrations/<provedor>/`. Services orquestram, integrations traduzem protocolo. Regras completas em [requirements.md](requirements.md#camada-integrations--chamadas-a-apis-externas).
+- **Asaas customer_id**: persistido em `usuarios.asaas_customer_id`. Primeira cobrança cria o cliente no Asaas; próximas reutilizam.
 
 ---
 

@@ -16,16 +16,27 @@ async def get_by_id(db: AsyncSession, usuario_id: uuid.UUID) -> Usuario | None:
     return result.scalar_one_or_none()
 
 
+async def get_by_cpf_cnpj(db: AsyncSession, cpf_cnpj: str) -> Usuario | None:
+    result = await db.execute(select(Usuario).where(Usuario.cpf_cnpj == cpf_cnpj))
+    return result.scalar_one_or_none()
+
+
 async def create(
     db: AsyncSession,
     nome: str,
     celular: str,
+    cpf_cnpj: str,
     email: str,
     senha_hash: str,
     perfil: PerfilUsuario,
 ) -> Usuario:
     usuario = Usuario(
-        nome=nome, email=email, senha_hash=senha_hash, perfil=perfil, celular=celular
+        nome=nome,
+        email=email,
+        senha_hash=senha_hash,
+        perfil=perfil,
+        celular=celular,
+        cpf_cnpj=cpf_cnpj,
     )
     db.add(usuario)
     await db.commit()

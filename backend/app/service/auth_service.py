@@ -40,6 +40,7 @@ async def cadastrar(db: AsyncSession, data: CadastroRequest) -> Usuario:
         nome=data.nome,
         celular=data.celular,
         email=data.email,
+        cpf_cnpj=data.cpf_cnpj,
         senha_hash=_hash_senha(data.senha),
         perfil=data.perfil,
     )

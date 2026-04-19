@@ -10,7 +10,7 @@ from app.db.base import Base
 
 class MetodoPagamento(str, enum.Enum):
     PIX = "PIX"
-    CARTAO_CREDITO = "CARTAO_CREDITO"
+    CARTAO_CREDITO = "CREDIT_CARD"
     BOLETO = "BOLETO"
 
 
@@ -28,7 +28,7 @@ class Pagamento(Base):
     pedido_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("pedidos.id"), nullable=False
     )
-    gateway_transacao_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    charge_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metodo: Mapped[MetodoPagamento] = mapped_column(
         Enum(MetodoPagamento), nullable=False
     )

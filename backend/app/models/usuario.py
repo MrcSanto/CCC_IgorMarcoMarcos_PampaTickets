@@ -68,6 +68,7 @@ class Usuario(Base):
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     perfil: Mapped[PerfilUsuario] = mapped_column(Enum(PerfilUsuario), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    asaas_customer_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )

@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     # SUPABASE_BUCKET_CERTIFICADOS: str = "certificados"
     # SUPABASE_BUCKET_RELATORIOS: str = "relatorios"
 
-    # # Asaas (gateway de pagamento)
-    # ASAAS_API_KEY: str
-    # ASAAS_BASE_URL: str = "https://sandbox.asaas.com/api/v3"
+    # Asaas (gateway de pagamento)
+    ASAAS_API_KEY: str
+    ASAAS_BASE_URL: str
     # ASAAS_WEBHOOK_TOKEN: str
 
     # # Meta Cloud API — WhatsApp Business

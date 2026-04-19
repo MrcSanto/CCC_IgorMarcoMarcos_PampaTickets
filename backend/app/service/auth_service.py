@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -6,6 +7,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.integrations.asaas import customers as asaas_customers
+from app.integrations.asaas.exceptions import AsaasAPIError
 from app.models.usuario import Usuario
 from app.repositories import usuario_repo
 from app.schemas.usuario import CadastroRequest, LoginRequest
@@ -28,21 +31,44 @@ def _gerar_token(usuario_id: str) -> str:
 
 
 async def cadastrar(db: AsyncSession, data: CadastroRequest) -> Usuario:
-    existente = await usuario_repo.get_by_email(db, data.email)
-    if existente:
+    if await usuario_repo.get_by_email(db, data.email):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="E-mail já cadastrado.",
         )
 
+    if await usuario_repo.get_by_cpf_cnpj(db, data.cpf_cnpj):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="CPF/CNPJ já cadastrado.",
+        )
+
+    usuario_id = uuid.uuid4()
+    try:
+        customer = await asaas_customers.create_customer(
+            nome=data.nome,
+            cpf_cnpj=data.cpf_cnpj,
+            email=data.email,
+            celular=data.celular,
+            usuario_id=usuario_id,
+        )
+    except AsaasAPIError as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Falha ao registrar cliente no gateway de pagamento.",
+        )
+
     return await usuario_repo.create(
         db,
+        id=usuario_id,
         nome=data.nome,
         celular=data.celular,
         email=data.email,
         cpf_cnpj=data.cpf_cnpj,
         senha_hash=_hash_senha(data.senha),
         perfil=data.perfil,
+        asaas_customer_id=customer["id"],
     )
 
 

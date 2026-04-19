@@ -5,12 +5,14 @@ from fastapi import FastAPI
 
 from app.api.routes import auth
 from app.db.session import init_db
+from app.integrations.asaas.client import close_client as close_asaas_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
     await init_db()
     yield
+    await close_asaas_client()
 
 
 app = FastAPI(

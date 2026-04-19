@@ -29,14 +29,18 @@ async def create(
     email: str,
     senha_hash: str,
     perfil: PerfilUsuario,
+    asaas_customer_id: str | None = None,
+    id: uuid.UUID | None = None,
 ) -> Usuario:
     usuario = Usuario(
+        id=id or uuid.uuid4(),
         nome=nome,
         email=email,
         senha_hash=senha_hash,
         perfil=perfil,
         celular=celular,
         cpf_cnpj=cpf_cnpj,
+        asaas_customer_id=asaas_customer_id,
     )
     db.add(usuario)
     await db.commit()

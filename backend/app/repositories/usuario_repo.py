@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.usuario import Usuario, PerfilUsuario
+from app.models.usuario import PerfilUsuario, Usuario
 
 
 async def get_by_email(db: AsyncSession, email: str) -> Usuario | None:

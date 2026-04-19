@@ -42,9 +42,8 @@ cp ../.env.example ../.env
 
 ```bash
 # Na raiz do projeto
-make install   # instala dependências
-make migrate   # aplica migrações
-make dev       # inicia o servidor com hot-reload
+make build
+make up
 ```
 
 A API estará disponível em `http://localhost:8000`.

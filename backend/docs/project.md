@@ -172,7 +172,7 @@ SUPABASE_BUCKET_RELATORIOS=relatorios
 
 # Asaas
 ASAAS_API_KEY=sua-api-key-asaas
-ASAAS_BASE_URL=https://sandbox.asaas.com/api/v3
+ASAAS_BASE_URL_UAT=https://sandbox.asaas.com/api/v3
 ASAAS_WEBHOOK_TOKEN=token-para-validar-webhooks
 
 # Meta Cloud API — WhatsApp Business

@@ -28,7 +28,7 @@ services:
       ASYNC_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-pampa}:${POSTGRES_PASSWORD:-pampa}@db:5432/${POSTGRES_DB:-pampatickets}
       SECRET_KEY: ${SECRET_KEY}
       ASAAS_API_KEY: ${ASAAS_API_KEY}
-      ASAAS_BASE_URL: ${ASAAS_BASE_URL}
+      ASAAS_BASE_URL_UAT: ${ASAAS_BASE_URL_UAT}
     ports:
       - "8000:8000"
 

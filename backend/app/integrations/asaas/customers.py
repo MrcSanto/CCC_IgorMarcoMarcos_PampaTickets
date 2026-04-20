@@ -20,9 +20,6 @@ async def create_customer(
         "externalReference": str(usuario_id),
     }
     response = await get_client().post("/customers", json=payload)
-
-    print(f"{get_client().base_url}" + "/customers")
-
     if response.is_error:
         raise AsaasAPIError(response.status_code, response.text)
     return response.json()

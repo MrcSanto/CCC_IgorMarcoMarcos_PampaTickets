@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # Asaas (gateway de pagamento)
     ASAAS_API_KEY: str
-    ASAAS_BASE_URL: str
+    ASAAS_BASE_URL_UAT: str
     # ASAAS_WEBHOOK_TOKEN: str
 
     # # Meta Cloud API — WhatsApp Business

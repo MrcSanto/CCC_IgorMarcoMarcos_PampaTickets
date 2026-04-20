@@ -9,7 +9,7 @@ def get_client() -> httpx.AsyncClient:
     global _client
     if _client is None:
         _client = httpx.AsyncClient(
-            base_url=settings.ASAAS_BASE_URL,
+            base_url=settings.ASAAS_BASE_URL_UAT,
             headers={
                 "accept": "application/json",
                 "content-type": "application/json",

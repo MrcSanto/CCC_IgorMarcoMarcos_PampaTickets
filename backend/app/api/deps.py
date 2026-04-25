@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.usuario import Usuario
+from app.models.usuario import PerfilUsuario, Usuario
 from app.repositories import usuario_repo
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,3 +45,15 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[Usuario, Depends(get_current_user)]
+
+
+async def get_current_organizador(usuario: CurrentUser) -> Usuario:
+    if usuario.perfil != PerfilUsuario.ORGANIZADOR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas organizadores podem realizar esta operação.",
+        )
+    return usuario
+
+
+OrganizadorUser = Annotated[Usuario, Depends(get_current_organizador)]

@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt
 from fastapi import HTTPException, status
+
+# from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -52,8 +54,8 @@ async def cadastrar(db: AsyncSession, data: CadastroRequest) -> Usuario:
             celular=data.celular,
             usuario_id=usuario_id,
         )
-    except AsaasAPIError as e:
-        print(e)
+    except AsaasAPIError:
+        # logger.error(f"Falha ao registrar cliente no Asaas: {e}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Falha ao registrar cliente no gateway de pagamento.",

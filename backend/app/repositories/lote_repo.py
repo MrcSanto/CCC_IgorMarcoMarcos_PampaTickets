@@ -79,3 +79,11 @@ async def update_ativo(db: AsyncSession, lote: Lote, ativo: bool) -> Lote:
 async def delete(db: AsyncSession, lote: Lote) -> None:
     await db.delete(lote)
     await db.commit()
+
+
+def incrementar_vendidas(lote: Lote, quantidade: int) -> None:
+    lote.quantidade_vendida += quantidade
+
+
+def decrementar_vendidas(lote: Lote, quantidade: int) -> None:
+    lote.quantidade_vendida -= quantidade

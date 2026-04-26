@@ -7,7 +7,7 @@
 
 ## Última atualização
 
-**Data:** 25/04/2026 (sessão 3)
+**Data:** 25/04/2026 (sessão 5)
 **Responsável:** Marco Antonio Santolin
 
 ---
@@ -20,8 +20,8 @@
 - [ ] UC04 — Check-in via QR Code
 - [ ] UC05 — Cupons de desconto
 - [ ] UC06 — Cortesias
-- [ ] UC07 — Busca e Compra de Ingressos *(parcial — service e integração Asaas prontos, faltam rotas `/api/pedidos`)*
-- [ ] UC09 — Pagamento via Asaas *(parcial — `pagamento_service.criar_pagamento` e integração HTTP prontos; falta rota real e fluxo end-to-end)*
+- [x] UC07 — Busca e Compra de Ingressos
+- [ ] UC09 — Pagamento via Asaas *(parcial — `pagamento_service.criar_pagamento` integrado no fluxo de criação de pedido; falta apenas o webhook para confirmar pagamento)*
 - [ ] UC10 — Reembolso
 - [ ] UC11 — Webhooks do Asaas *(parcial — `pagamento_service.processar_webhook` pronto; falta rota `/webhooks/asaas` e validação do header)*
 - [ ] UC12 — Geração de Ingresso PDF
@@ -34,16 +34,15 @@
 
 ## Em progresso
 
-UC07 + UC09 + UC11 — fluxo end-to-end de compra/pagamento/webhook do Asaas. Pré-requisitos (eventos e lotes) prontos; falta a rota real de pedidos, o webhook e remover a rota temporária.
+UC11 — webhook do Asaas. Última peça para o ciclo end-to-end: participante paga → Asaas notifica → pedido vira PAGO.
 
 ---
 
 ## Próximo passo
 
-1. Implementar `POST /api/pedidos` (UC07) — cria `Pedido` + `PedidoItem`, valida `lote.ativo` + janela de venda + `quantidade_disponivel`, atualiza `lote.quantidade_vendida` e dispara `pagamento_service.criar_pagamento`.
-2. Implementar `GET /api/pedidos/{id}` e `GET /api/pedidos/meus`.
-3. Implementar `POST /webhooks/asaas` (UC11) — sem JWT, valida header `asaas-access-token`, chama `pagamento_service.processar_webhook`.
-4. Remover a rota temporária [app/api/routes/pagamentos.py](../app/api/routes/pagamentos.py) (router já comentado em `main.py`) após validar o fluxo real.
+1. Implementar `POST /webhooks/asaas` (UC11) — sem JWT, valida header `asaas-access-token`, chama `pagamento_service.processar_webhook` (já existe).
+2. Remover a rota temporária [app/api/routes/pagamentos.py](../app/api/routes/pagamentos.py) (router já comentado em `main.py`) após validar o fluxo real.
+3. Corrigir `.env` local: renomear `ASAAS_BASE_URL` → `ASAAS_BASE_URL_UAT` para conseguir subir o backend.
 
 ---
 
@@ -61,6 +60,8 @@ UC07 + UC09 + UC11 — fluxo end-to-end de compra/pagamento/webhook do Asaas. Pr
 - **UC02 completo** (25/04/2026): 8 endpoints de eventos implementados. `GET /api/eventos/{id}` retorna 404 para RASCUNHO e CANCELADO — só PUBLICADO e ENCERRADO são visíveis publicamente. `OrganizadorUser` adicionado em `deps.py` para proteger rotas de escrita/transição de status. Publicar/encerrar/cancelar validam que o usuário é o dono do evento via `_obter_proprio`.
 - **UC03 completo** (25/04/2026): 7 endpoints de lotes (`POST/GET /api/eventos/{id}/lotes`, `GET /api/organizador/eventos/{id}/lotes`, `PUT/PATCH(ativar|desativar)/DELETE /api/lotes/{id}`). Lotes só podem ser gerenciados em eventos `RASCUNHO` ou `PUBLICADO` (409 caso contrário). `LoteResponse` expõe `quantidade_disponivel` via `@computed_field`. `DELETE` só permitido se `quantidade_vendida == 0`. Posse validada via `_obter_lote_proprio` (lote → evento → checa `organizador_id`).
 - **UC03 refinamentos** (25/04/2026): campo `ativo` exposto no `LoteCreate` (default `true`) — organizador escolhe o estado inicial na criação. Validação de datas de venda contra o evento: `data_inicio_venda < evento.data_inicio` e `data_fim_venda <= evento.data_inicio` (422 caso contrário), aplicada em `criar` e `editar`.
+- **Logging estruturado** (25/04/2026): `loguru` instalado. `LoggingMiddleware` registrado em `main.py` — loga method, path, status_code, duration_ms, IP e request_id por request. `setup_logging()` chamado no lifespan. `print()` em `auth_service.py` substituído por `logger.error()`.
+- **UC07 completo** (25/04/2026): 4 endpoints (`POST /api/pedidos`, `GET /api/pedidos/meus`, `GET /api/pedidos/{id}`, `POST /api/pedidos/{id}/cancelar`). Criação atômica (flush + commit único) de `Pedido` + `PedidoItem` + incremento de `quantidade_vendida`. Cobrança Asaas gerada após commit. Cancelamento valida status PENDENTE e devolve estoque. `ParticipanteUser` adicionado em `deps.py`.
 
 ---
 
@@ -71,6 +72,6 @@ UC07 + UC09 + UC11 — fluxo end-to-end de compra/pagamento/webhook do Asaas. Pr
 - **Rate limiting** nos endpoints `/login` e `/cadastro`.
 - **Validação de força de senha** no cadastro.
 - **Migrações Alembic**: confirmar versionamento e execução automática via `make up`.
-- **Logs estruturados** e tratamento global de exceções da API.
+- ~~**Logs estruturados**~~ resolvido: loguru + `LoggingMiddleware` loga cada request. Tratamento global de exceções da API ainda pendente.
 - **CORS**: revisar origens permitidas antes de qualquer deploy.
 - **Seed de dados** para desenvolvimento (usuário admin inicial).

@@ -64,7 +64,7 @@ class Usuario(Base):
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     cpf_cnpj: Mapped[str] = mapped_column(String(14), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    celular: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    celular: Mapped[str] = mapped_column(String(255), nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     perfil: Mapped[PerfilUsuario] = mapped_column(Enum(PerfilUsuario), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

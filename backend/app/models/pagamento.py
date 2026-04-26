@@ -17,6 +17,7 @@ class MetodoPagamento(str, enum.Enum):
 class StatusPagamento(str, enum.Enum):
     AGUARDANDO = "AGUARDANDO"
     APROVADO = "APROVADO"
+    CANCELADO = "CANCELADO"
     RECUSADO = "RECUSADO"
     ESTORNADO = "ESTORNADO"
 

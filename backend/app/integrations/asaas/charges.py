@@ -41,3 +41,13 @@ async def create_charge(
     if response.is_error:
         raise AsaasAPIError(response.status_code, response.text)
     return response.json()
+
+
+async def delete_charge(*, charge_id: str) -> bool:
+    route = f"/payments/{charge_id}"
+
+    response = await get_client().delete(route)
+    if response.is_error:
+        raise AsaasAPIError(response.status_code, response.text)
+
+    return response.json()["deleted"]  # caso não encontrar o campo vai estourar um erro

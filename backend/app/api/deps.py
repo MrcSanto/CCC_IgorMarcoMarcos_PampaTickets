@@ -57,3 +57,15 @@ async def get_current_organizador(usuario: CurrentUser) -> Usuario:
 
 
 OrganizadorUser = Annotated[Usuario, Depends(get_current_organizador)]
+
+
+async def get_current_participante(usuario: CurrentUser) -> Usuario:
+    if usuario.perfil != PerfilUsuario.PARTICIPANTE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas participantes podem realizar esta operação.",
+        )
+    return usuario
+
+
+ParticipanteUser = Annotated[Usuario, Depends(get_current_participante)]

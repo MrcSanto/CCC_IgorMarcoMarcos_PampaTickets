@@ -14,9 +14,7 @@ router = APIRouter(tags=["Eventos"])
     response_model=EventoResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def criar_evento(
-    data: EventoCreate, db: DbDep, organizador: OrganizadorUser
-):
+async def criar_evento(data: EventoCreate, db: DbDep, organizador: OrganizadorUser):
     return await evento_service.criar(db, organizador, data)
 
 

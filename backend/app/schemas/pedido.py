@@ -45,3 +45,4 @@ class PedidoCriadoResponse(BaseModel):
     pedido: PedidoResponse
     invoice_url: str
     charge_id: str
+    pix_qrcode: dict | None = None

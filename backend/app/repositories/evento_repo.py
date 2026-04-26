@@ -61,9 +61,7 @@ async def create(
     return evento
 
 
-async def update(
-    db: AsyncSession, evento: Evento, **campos: Any
-) -> Evento:
+async def update(db: AsyncSession, evento: Evento, **campos: Any) -> Evento:
     for chave, valor in campos.items():
         setattr(evento, chave, valor)
     await db.commit()

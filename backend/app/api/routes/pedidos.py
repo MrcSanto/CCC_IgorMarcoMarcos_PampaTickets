@@ -14,9 +14,7 @@ router = APIRouter(tags=["Pedidos"])
     response_model=PedidoCriadoResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def criar_pedido(
-    data: PedidoCreate, db: DbDep, participante: ParticipanteUser
-):
+async def criar_pedido(data: PedidoCreate, db: DbDep, participante: ParticipanteUser):
     resultado = await pedido_service.criar(db, participante, data)
     return resultado
 
@@ -27,9 +25,7 @@ async def listar_meus_pedidos(db: DbDep, participante: ParticipanteUser):
 
 
 @router.get("/pedidos/{pedido_id}", response_model=PedidoResponse)
-async def obter_pedido(
-    pedido_id: uuid.UUID, db: DbDep, usuario: CurrentUser
-):
+async def obter_pedido(pedido_id: uuid.UUID, db: DbDep, usuario: CurrentUser):
     return await pedido_service.obter(db, usuario, pedido_id)
 
 

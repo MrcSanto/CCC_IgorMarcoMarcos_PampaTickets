@@ -18,9 +18,7 @@ class LoteCreate(BaseModel):
     @model_validator(mode="after")
     def validar_periodo_venda(self) -> "LoteCreate":
         if self.data_fim_venda <= self.data_inicio_venda:
-            raise ValueError(
-                "data_fim_venda deve ser posterior a data_inicio_venda."
-            )
+            raise ValueError("data_fim_venda deve ser posterior a data_inicio_venda.")
         return self
 
 
@@ -39,9 +37,7 @@ class LoteUpdate(BaseModel):
             and self.data_fim_venda is not None
             and self.data_fim_venda <= self.data_inicio_venda
         ):
-            raise ValueError(
-                "data_fim_venda deve ser posterior a data_inicio_venda."
-            )
+            raise ValueError("data_fim_venda deve ser posterior a data_inicio_venda.")
         return self
 
 

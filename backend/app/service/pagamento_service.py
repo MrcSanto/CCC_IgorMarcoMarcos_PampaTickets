@@ -34,17 +34,13 @@ async def criar_pagamento(
         external_reference=str(pedido.id),
     )
 
-    await pagamento_repo.update_charge_id(
-        db, pagamento, cobranca["id"]
-    )
+    await pagamento_repo.update_charge_id(db, pagamento, cobranca["id"])
 
     return cobranca
 
 
 async def obter_pix_qrcode(charge_id: str) -> dict:
-    return await asaas_charges.get_pix_qrcode(
-        charge_id=charge_id
-    )
+    return await asaas_charges.get_pix_qrcode(charge_id=charge_id)
 
 
 async def processar_webhook(db: AsyncSession, *, evento: str, payment_id: str) -> None:

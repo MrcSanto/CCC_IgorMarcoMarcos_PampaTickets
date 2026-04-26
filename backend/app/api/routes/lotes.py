@@ -23,9 +23,7 @@ async def criar_lote(
     return await lote_service.criar(db, organizador, evento_id, data)
 
 
-@router.get(
-    "/eventos/{evento_id}/lotes", response_model=list[LoteResponse]
-)
+@router.get("/eventos/{evento_id}/lotes", response_model=list[LoteResponse])
 async def listar_lotes_publicos(evento_id: uuid.UUID, db: DbDep):
     return await lote_service.listar_publicos_do_evento(db, evento_id)
 
@@ -51,22 +49,16 @@ async def editar_lote(
 
 
 @router.patch("/lotes/{lote_id}/ativar", response_model=LoteResponse)
-async def ativar_lote(
-    lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser
-):
+async def ativar_lote(lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser):
     return await lote_service.ativar(db, organizador, lote_id)
 
 
 @router.patch("/lotes/{lote_id}/desativar", response_model=LoteResponse)
-async def desativar_lote(
-    lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser
-):
+async def desativar_lote(lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser):
     return await lote_service.desativar(db, organizador, lote_id)
 
 
 @router.delete("/lotes/{lote_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def deletar_lote(
-    lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser
-):
+async def deletar_lote(lote_id: uuid.UUID, db: DbDep, organizador: OrganizadorUser):
     await lote_service.deletar(db, organizador, lote_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

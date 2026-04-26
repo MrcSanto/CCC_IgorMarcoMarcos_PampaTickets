@@ -15,16 +15,12 @@ async def get_by_id(db: AsyncSession, lote_id: uuid.UUID) -> Lote | None:
 
 async def list_by_evento(db: AsyncSession, evento_id: uuid.UUID) -> list[Lote]:
     result = await db.execute(
-        select(Lote)
-        .where(Lote.evento_id == evento_id)
-        .order_by(Lote.data_inicio_venda)
+        select(Lote).where(Lote.evento_id == evento_id).order_by(Lote.data_inicio_venda)
     )
     return list(result.scalars().all())
 
 
-async def list_ativos_by_evento(
-    db: AsyncSession, evento_id: uuid.UUID
-) -> list[Lote]:
+async def list_ativos_by_evento(db: AsyncSession, evento_id: uuid.UUID) -> list[Lote]:
     result = await db.execute(
         select(Lote)
         .where(Lote.evento_id == evento_id, Lote.ativo.is_(True))

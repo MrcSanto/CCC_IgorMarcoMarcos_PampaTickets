@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.models.pedido import Pedido, PedidoItem, StatusPedido
+from app.models.pedido import Pedido, StatusPedido
 
 
 async def get_by_id(db: AsyncSession, pedido_id: uuid.UUID) -> Pedido | None:
@@ -12,9 +12,7 @@ async def get_by_id(db: AsyncSession, pedido_id: uuid.UUID) -> Pedido | None:
     return result.scalar_one_or_none()
 
 
-async def get_by_id_com_itens(
-    db: AsyncSession, pedido_id: uuid.UUID
-) -> Pedido | None:
+async def get_by_id_com_itens(db: AsyncSession, pedido_id: uuid.UUID) -> Pedido | None:
     result = await db.execute(
         select(Pedido)
         .options(joinedload(Pedido.itens))

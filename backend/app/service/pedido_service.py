@@ -2,11 +2,13 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.asaas import charges as asaas_charges
 from app.integrations.asaas.exceptions import AsaasAPIError
 from app.models.evento import StatusEvento
+from app.models.pagamento import MetodoPagamento
 from app.models.pagamento import StatusPagamento
 from app.models.pedido import Pedido, PedidoItem, StatusPedido
 from app.models.usuario import Usuario
@@ -15,9 +17,7 @@ from app.schemas.pedido import PedidoCreate
 from app.service import pagamento_service
 
 
-async def criar(
-    db: AsyncSession, participante: Usuario, data: PedidoCreate
-) -> dict:
+async def criar(db: AsyncSession, participante: Usuario, data: PedidoCreate) -> dict:
     evento = await evento_repo.get_by_id(db, data.evento_id)
     if evento is None or evento.status != StatusEvento.PUBLICADO:
         raise HTTPException(
@@ -97,23 +97,36 @@ async def criar(
             customer_id=participante.asaas_customer_id,
         )
     except AsaasAPIError as e:
+        for lote, qtd in lotes_validos:
+            lote_repo.decrementar_vendidas(lote, qtd)
+        pedido.status = StatusPedido.CANCELADO
+        await db.commit()
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Pedido criado, mas falha ao gerar cobrança no gateway: {e}",
+            detail=f"Falha ao gerar cobrança no gateway de pagamento: {e}",
         )
 
     pedido_com_itens = await pedido_repo.get_by_id_com_itens(db, pedido.id)
+
+    pix_qrcode = None
+    if data.metodo == MetodoPagamento.PIX:
+        charge_id = cobranca.get("id", "")
+        if charge_id:
+            try:
+                pix_qrcode = await asaas_charges.get_pix_qrcode(charge_id=charge_id)
+            except AsaasAPIError:
+                logger.warning("Falha ao buscar QR Code PIX para charge {}", charge_id)
+                pass
 
     return {
         "pedido": pedido_com_itens,
         "invoice_url": cobranca.get("invoiceUrl", ""),
         "charge_id": cobranca.get("id", ""),
+        "pix_qrcode": pix_qrcode,
     }
 
 
-async def obter(
-    db: AsyncSession, usuario: Usuario, pedido_id: uuid.UUID
-) -> Pedido:
+async def obter(db: AsyncSession, usuario: Usuario, pedido_id: uuid.UUID) -> Pedido:
     pedido = await pedido_repo.get_by_id_com_itens(db, pedido_id)
     if pedido is None:
         raise HTTPException(

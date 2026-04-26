@@ -45,3 +45,6 @@ dev = [
 dev = [
     "ruff>=0.15.9",
 ]
+
+[tool.ruff]
+exclude = ["alembic/versions"]

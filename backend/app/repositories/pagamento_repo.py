@@ -33,18 +33,12 @@ async def get_by_id(db: AsyncSession, pagamento_id: uuid.UUID) -> Pagamento | No
 
 
 async def get_by_pedido_id(db: AsyncSession, pedido_id: uuid.UUID) -> Pagamento | None:
-    result = await db.execute(
-        select(Pagamento).where(Pagamento.pedido_id == pedido_id)
-    )
+    result = await db.execute(select(Pagamento).where(Pagamento.pedido_id == pedido_id))
     return result.scalar_one_or_none()
 
 
-async def get_by_charge_id(
-    db: AsyncSession, charge_id: str
-) -> Pagamento | None:
-    result = await db.execute(
-        select(Pagamento).where(Pagamento.charge_id == charge_id)
-    )
+async def get_by_charge_id(db: AsyncSession, charge_id: str) -> Pagamento | None:
+    result = await db.execute(select(Pagamento).where(Pagamento.charge_id == charge_id))
     return result.scalar_one_or_none()
 
 
@@ -71,4 +65,3 @@ async def update_charge_id(
     await db.commit()
     await db.refresh(pagamento)
     return pagamento
-

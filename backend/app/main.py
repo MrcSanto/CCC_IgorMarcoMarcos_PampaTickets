@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator
 from fastapi import FastAPI
 
 from app.api.middleware.logging import LoggingMiddleware
-from app.api.routes import auth, eventos, lotes, pagamentos, pedidos
+from app.api.routes import auth, eventos, lotes, pedidos
 from app.core.logging_config import setup_logging
 from app.db.session import init_db
 from app.integrations.asaas.client import close_client as close_asaas_client
@@ -29,7 +29,6 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(eventos.router, prefix="/api")
 app.include_router(lotes.router, prefix="/api")
 app.include_router(pedidos.router, prefix="/api")
-# app.include_router(pagamentos.router, prefix="/api")  # TODO: remover após testes
 
 
 @app.get("/", tags=["Health Check"])

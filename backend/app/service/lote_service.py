@@ -91,25 +91,19 @@ async def editar(
     return await lote_repo.update(db, lote, **campos)
 
 
-async def ativar(
-    db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID
-) -> Lote:
+async def ativar(db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID) -> Lote:
     lote, evento = await _obter_lote_proprio(db, organizador, lote_id)
     _exigir_evento_gerenciavel(evento)
     return await lote_repo.update_ativo(db, lote, True)
 
 
-async def desativar(
-    db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID
-) -> Lote:
+async def desativar(db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID) -> Lote:
     lote, evento = await _obter_lote_proprio(db, organizador, lote_id)
     _exigir_evento_gerenciavel(evento)
     return await lote_repo.update_ativo(db, lote, False)
 
 
-async def deletar(
-    db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID
-) -> None:
+async def deletar(db: AsyncSession, organizador: Usuario, lote_id: uuid.UUID) -> None:
     lote, evento = await _obter_lote_proprio(db, organizador, lote_id)
     _exigir_evento_gerenciavel(evento)
     if lote.quantidade_vendida > 0:

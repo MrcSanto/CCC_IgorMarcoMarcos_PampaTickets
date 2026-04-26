@@ -7,7 +7,7 @@
 
 ## Última atualização
 
-**Data:** 25/04/2026 (sessão 2)
+**Data:** 25/04/2026 (sessão 3)
 **Responsável:** Marco Antonio Santolin
 
 ---
@@ -16,7 +16,7 @@
 
 - [x] UC01 — Autenticação JWT
 - [x] UC02 — Gerenciamento de Eventos
-- [ ] UC03 — Gerenciamento de Ingressos/Lotes
+- [x] UC03 — Gerenciamento de Ingressos/Lotes
 - [ ] UC04 — Check-in via QR Code
 - [ ] UC05 — Cupons de desconto
 - [ ] UC06 — Cortesias
@@ -34,16 +34,16 @@
 
 ## Em progresso
 
-UC03 — Gerenciamento de Lotes (bloqueador para criar `Pedido` com FKs válidas e testar o gateway Asaas end-to-end).
+UC07 + UC09 + UC11 — fluxo end-to-end de compra/pagamento/webhook do Asaas. Pré-requisitos (eventos e lotes) prontos; falta a rota real de pedidos, o webhook e remover a rota temporária.
 
 ---
 
 ## Próximo passo
 
-1. Implementar UC03: `POST /api/eventos/{id}/lotes`, `GET /api/eventos/{id}/lotes`, `PUT` e ativação/desativação de lote.
-2. Implementar `POST /api/pedidos` (UC07) — cria `Pedido` + `PedidoItem` e dispara `pagamento_service.criar_pagamento`.
+1. Implementar `POST /api/pedidos` (UC07) — cria `Pedido` + `PedidoItem`, valida `lote.ativo` + janela de venda + `quantidade_disponivel`, atualiza `lote.quantidade_vendida` e dispara `pagamento_service.criar_pagamento`.
+2. Implementar `GET /api/pedidos/{id}` e `GET /api/pedidos/meus`.
 3. Implementar `POST /webhooks/asaas` (UC11) — sem JWT, valida header `asaas-access-token`, chama `pagamento_service.processar_webhook`.
-4. Remover a rota temporária [app/api/routes/pagamentos.py](../app/api/routes/pagamentos.py) após validar o fluxo real.
+4. Remover a rota temporária [app/api/routes/pagamentos.py](../app/api/routes/pagamentos.py) (router já comentado em `main.py`) após validar o fluxo real.
 
 ---
 
@@ -59,6 +59,8 @@ UC03 — Gerenciamento de Lotes (bloqueador para criar `Pedido` com FKs válidas
 - **Sandbox Asaas** (25/04/2026): variável renomeada para `ASAAS_BASE_URL_UAT` para deixar explícito o ambiente de homologação.
 - **Rota temporária** (25/04/2026): `POST /api/pagamentos` foi adicionada apenas para validar a persistência e está marcada para remoção assim que `POST /api/pedidos` entrar. Router comentado em `main.py` na sessão 2.
 - **UC02 completo** (25/04/2026): 8 endpoints de eventos implementados. `GET /api/eventos/{id}` retorna 404 para RASCUNHO e CANCELADO — só PUBLICADO e ENCERRADO são visíveis publicamente. `OrganizadorUser` adicionado em `deps.py` para proteger rotas de escrita/transição de status. Publicar/encerrar/cancelar validam que o usuário é o dono do evento via `_obter_proprio`.
+- **UC03 completo** (25/04/2026): 7 endpoints de lotes (`POST/GET /api/eventos/{id}/lotes`, `GET /api/organizador/eventos/{id}/lotes`, `PUT/PATCH(ativar|desativar)/DELETE /api/lotes/{id}`). Lotes só podem ser gerenciados em eventos `RASCUNHO` ou `PUBLICADO` (409 caso contrário). `LoteResponse` expõe `quantidade_disponivel` via `@computed_field`. `DELETE` só permitido se `quantidade_vendida == 0`. Posse validada via `_obter_lote_proprio` (lote → evento → checa `organizador_id`).
+- **UC03 refinamentos** (25/04/2026): campo `ativo` exposto no `LoteCreate` (default `true`) — organizador escolhe o estado inicial na criação. Validação de datas de venda contra o evento: `data_inicio_venda < evento.data_inicio` e `data_fim_venda <= evento.data_inicio` (422 caso contrário), aplicada em `criar` e `editar`.
 
 ---
 

@@ -3,7 +3,7 @@ from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI
 
-from app.api.routes import auth, eventos, pagamentos
+from app.api.routes import auth, eventos, lotes, pagamentos
 from app.db.session import init_db
 from app.integrations.asaas.client import close_client as close_asaas_client
 
@@ -22,6 +22,7 @@ app = FastAPI(
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(eventos.router, prefix="/api")
+app.include_router(lotes.router, prefix="/api")
 # app.include_router(pagamentos.router, prefix="/api")  # TODO: remover após testes
 
 

@@ -3,3 +3,8 @@
 .env
 .env.*
 !.env.example
+
+# smoke test artifacts
+.playwright-mcp/
+smoke-*.png
+marcos-*.png

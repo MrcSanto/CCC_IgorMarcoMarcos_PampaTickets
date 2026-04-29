@@ -52,10 +52,18 @@ async def cadastrar(db: AsyncSession, data: CadastroRequest) -> Usuario:
             celular=data.celular,
             usuario_id=usuario_id,
         )
-    except AsaasAPIError:
+    except AsaasAPIError as exc:
+        # 4xx do Asaas significa que ele rejeitou os dados (CPF/CNPJ, e-mail, etc.)
+        # — devolvemos 422 com a mensagem dele para o cliente corrigir e tentar de novo.
+        # 5xx significa indisponibilidade do gateway: respondemos 502 genérico.
+        if exc.is_client_error:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=exc.user_message,
+            )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Falha ao registrar cliente no gateway de pagamento.",
+            detail="Gateway de pagamento indisponível. Tente novamente em instantes.",
         )
 
     return await usuario_repo.create(

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.core.validators import validar_cpf_cnpj
 from app.models.usuario import PerfilUsuario
 
 
@@ -16,6 +17,11 @@ class CadastroRequest(BaseModel):
     celular: str = Field(..., examples=["54999407969"])
     senha: str = Field(..., min_length=8, max_length=72, examples=["Marco123"])
     perfil: PerfilUsuario = Field(..., examples=["ORGANIZADOR"])
+
+    @field_validator("cpf_cnpj")
+    @classmethod
+    def normalizar_cpf_cnpj(cls, v: str) -> str:
+        return validar_cpf_cnpj(v)
 
     @field_validator("celular")
     @classmethod

@@ -96,14 +96,19 @@ async def criar(db: AsyncSession, participante: Usuario, data: PedidoCreate) -> 
             metodo=data.metodo,
             customer_id=participante.asaas_customer_id,
         )
-    except AsaasAPIError as e:
+    except AsaasAPIError as exc:
         for lote, qtd in lotes_validos:
             lote_repo.decrementar_vendidas(lote, qtd)
         pedido.status = StatusPedido.CANCELADO
         await db.commit()
+        if exc.is_client_error:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=exc.user_message,
+            )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Falha ao gerar cobrança no gateway de pagamento: {e}",
+            detail="Gateway de pagamento indisponível. Tente novamente em instantes.",
         )
 
     pedido_com_itens = await pedido_repo.get_by_id_com_itens(db, pedido.id)

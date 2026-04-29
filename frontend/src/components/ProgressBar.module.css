@@ -1,0 +1,22 @@
+.track {
+  background: var(--pt-accent-soft);
+  border-radius: var(--pt-r-pill);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  transition: width var(--pt-t-base);
+}
+
+.fill[data-tone="ok"] {
+  background: var(--pt-accent);
+}
+
+.fill[data-tone="warn"] {
+  background: var(--pt-warn);
+}
+
+.fill[data-tone="danger"] {
+  background: var(--pt-danger);
+}

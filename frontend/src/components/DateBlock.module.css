@@ -1,0 +1,33 @@
+.block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--pt-accent-soft);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-r-sm);
+  color: var(--pt-text);
+  line-height: 1;
+}
+
+.mes {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+}
+
+.dia {
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+  letter-spacing: -0.02em;
+}
+
+.sub {
+  font-size: 9px;
+  color: var(--pt-text-dim);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}

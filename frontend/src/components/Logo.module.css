@@ -1,0 +1,27 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pt-s-2);
+  user-select: none;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pt-accent);
+  color: var(--pt-accent-on);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.wordmark {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--pt-text);
+}
+
+.wordmark em {
+  font-style: normal;
+  color: var(--pt-accent);
+}

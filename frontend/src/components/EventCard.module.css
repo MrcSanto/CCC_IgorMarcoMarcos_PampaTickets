@@ -1,0 +1,123 @@
+.card {
+  display: block;
+  background: var(--pt-bg-card);
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-r-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--pt-t-base), border-color var(--pt-t-base);
+  color: inherit;
+  text-decoration: none;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--pt-accent);
+}
+
+.cover {
+  height: 130px;
+  position: relative;
+}
+
+.badgeUrgent {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--pt-danger);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--pt-r-xs);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.badgeCategory {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--pt-r-xs);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.body {
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+}
+
+.dateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  padding: 4px 6px;
+  background: var(--pt-accent-soft);
+  border-radius: var(--pt-r-sm);
+  border: 1px solid var(--pt-border);
+  flex-shrink: 0;
+}
+
+.mes {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+}
+
+.dia {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+  color: var(--pt-text);
+}
+
+.semana {
+  font-size: 9px;
+  color: var(--pt-text-dim);
+  margin-top: 2px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--pt-text);
+  text-wrap: balance;
+}
+
+.meta {
+  font-size: 11px;
+  color: var(--pt-text-dim);
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price {
+  font-size: 12px;
+  color: var(--pt-accent);
+  margin-top: 6px;
+  font-weight: 600;
+}

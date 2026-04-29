@@ -1,0 +1,194 @@
+/* PampaTickets — Design tokens
+ * Baseado em design_handoff_pampatickets/IDENTIDADE_VISUAL.md
+ * Verde-pampa + dourado · dois temas (escuro = participante, claro = organizador)
+ */
+
+:root {
+  /* === Brand (compartilhadas) === */
+  --pt-pampa-green: #7eb86b;
+  --pt-pampa-green-deep: #2d6b3f;
+  --pt-pampa-green-soft: #e8f0e8;
+  --pt-pampa-gold: #e8c547;
+  --pt-pampa-gold-deep: #c89b3c;
+  --pt-pampa-bordeaux: #8b1e2a;
+
+  /* === Tipografia === */
+  --pt-font-sans: "Inter", -apple-system, system-ui, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --pt-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* === Espaçamento (4px scale) === */
+  --pt-s-1: 4px;
+  --pt-s-2: 8px;
+  --pt-s-3: 12px;
+  --pt-s-4: 16px;
+  --pt-s-5: 20px;
+  --pt-s-6: 24px;
+  --pt-s-8: 32px;
+  --pt-s-10: 40px;
+  --pt-s-12: 48px;
+  --pt-s-16: 64px;
+
+  /* === Border radius === */
+  --pt-r-xs: 4px;
+  --pt-r-sm: 6px;
+  --pt-r-md: 8px;
+  --pt-r-lg: 10px;
+  --pt-r-xl: 12px;
+  --pt-r-2xl: 16px;
+  --pt-r-pill: 999px;
+
+  /* === Shadows === */
+  --pt-shadow-sm: 0 1px 2px rgba(14, 20, 16, 0.04);
+  --pt-shadow-md: 0 4px 12px rgba(14, 20, 16, 0.06);
+  --pt-shadow-lg: 0 8px 32px rgba(14, 20, 16, 0.08);
+  --pt-shadow-card: 0 2px 8px rgba(14, 20, 16, 0.04);
+
+  /* === Transições === */
+  --pt-t-fast: 120ms ease-out;
+  --pt-t-base: 150ms ease-out;
+  --pt-t-screen: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Tema escuro (participante) === */
+[data-theme="dark"] {
+  --pt-bg: #0b0d0c;
+  --pt-bg-card: #15181a;
+  --pt-bg-card-2: #1c2024;
+  --pt-border: #262b2f;
+  --pt-text: #f5f6f7;
+  --pt-text-dim: #8a9199;
+  --pt-accent: var(--pt-pampa-green);
+  --pt-accent-soft: rgba(126, 184, 107, 0.1);
+  --pt-accent-on: #0b0d0c;
+  --pt-accent-hot: var(--pt-pampa-gold);
+  --pt-warn: #e8c547;
+  --pt-danger: #e85d4d;
+}
+
+/* === Tema claro (organizador) === */
+[data-theme="light"] {
+  --pt-bg: #f6f7f5;
+  --pt-bg-card: #ffffff;
+  --pt-bg-card-2: #f0f1ee;
+  --pt-bg-sidebar: #1a2421;
+  --pt-border: #e5e7e2;
+  --pt-text: #0e1410;
+  --pt-text-dim: #6b7770;
+  --pt-accent: var(--pt-pampa-green-deep);
+  --pt-accent-soft: var(--pt-pampa-green-soft);
+  --pt-accent-on: #ffffff;
+  --pt-accent-hot: var(--pt-pampa-gold-deep);
+  --pt-warn: #d97706;
+  --pt-danger: #dc2626;
+}
+
+/* === Reset minimal === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--pt-font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--pt-text);
+  background: var(--pt-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+
+/* === Helpers globais === */
+.pt-mono {
+  font-family: var(--pt-font-mono);
+}
+
+.pt-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+}
+
+.pt-balance {
+  text-wrap: balance;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pt-border);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pt-text-dim);
+}
+
+:focus-visible {
+  outline: 2px solid var(--pt-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes pt-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

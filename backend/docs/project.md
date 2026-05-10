@@ -30,122 +30,78 @@ Este repositório contém o **backend principal**, responsável por toda a lógi
 
 ## Estrutura de Pastas
 
+> Este documento lista **apenas o que existe hoje no código**. UCs ainda não implementados (UC05/06/08/10/14/15) não estão na árvore — veja `roadmap.md` e `state.md` para o que está pendente.
+
 ```
-pampatickets/
-├── docs/                              # Documentação do projeto para o Claude Code
-│   ├── project.md
-│   ├── requirements.md
-│   ├── roadmap.md
-│   └── state.md
+backend/
+├── alembic/                              # Migrations Alembic (versões geradas automaticamente)
 ├── app/
 │   ├── api/
-│   │   ├── middlewares/
-│   │   │   ├── __init__.py
-│   │   │   └── request_id.py          # Middleware de rastreamento de requisições
-│   │   ├── routes/
-│   │   │   ├── __init__.py
-│   │   │   ├── auth.py                # Endpoints de autenticação e cadastro
-│   │   │   ├── eventos.py             # Endpoints de criação e gerenciamento de eventos
-│   │   │   ├── ingressos.py           # Endpoints de lotes e ingressos
-│   │   │   ├── pedidos.py             # Endpoints de pedidos e compras
-│   │   │   ├── cupons.py              # Endpoints de cupons de desconto
-│   │   │   ├── cortesias.py           # Endpoints de ingressos cortesia
-│   │   │   ├── checkin.py             # Endpoints de check-in via QR Code
-│   │   │   ├── relatorios.py          # Endpoints de relatórios PDF
-│   │   │   ├── webhooks.py            # Endpoint receptor de webhooks do Asaas
-│   │   │   └── galeria.py             # Galeria de fotos — baixa prioridade
-│   │   ├── __init__.py
-│   │   └── deps.py                    # Dependências compartilhadas (get_db, get_current_user)
+│   │   ├── deps.py                       # CurrentUser, OrganizadorUser, ParticipanteUser
+│   │   ├── middleware/
+│   │   │   └── logging.py                # LoggingMiddleware (loguru + request_id por request)
+│   │   └── routes/
+│   │       ├── auth.py                   # UC01 — cadastro, login, /me
+│   │       ├── checkin.py                # UC04 — POST /checkin via qr_code_hash
+│   │       ├── eventos.py                # UC02 — CRUD + publicar/encerrar/cancelar
+│   │       ├── ingressos.py              # consulta de ingressos do participante (/meus, /{id})
+│   │       ├── lotes.py                  # UC03 — CRUD + ativar/desativar
+│   │       ├── pedidos.py                # UC07 — criar, listar, detalhe, cancelar
+│   │       └── webhooks.py               # UC11 — receptor do Asaas
 │   ├── core/
-│   │   ├── __init__.py
-│   │   ├── config.py                  # Configurações via variáveis de ambiente
-│   │   ├── logging_config.py          # Configuração de logs estruturados
-│   │   ├── logging_context.py         # Contexto de logging por requisição
-│   │   └── scheduler_utils.py         # Utilitários para tarefas agendadas
+│   │   ├── config.py                     # Settings via pydantic-settings
+│   │   ├── logging_config.py             # setup_logging() do loguru
+│   │   └── validators.py                 # Mod 11 para CPF/CNPJ
 │   ├── db/
-│   │   ├── __init__.py
-│   │   ├── base.py                    # Base declarativa do SQLAlchemy + import dos models
-│   │   └── session.py                 # Engine e SessionLocal
+│   │   ├── base.py                       # Base declarativa + import de todos os models
+│   │   └── session.py                    # AsyncEngine, AsyncSession, init_db
+│   ├── integrations/                     # Clientes HTTP de APIs externas — sem regra de negócio
+│   │   ├── asaas/
+│   │   │   ├── client.py                 # httpx.AsyncClient singleton + auth/timeout
+│   │   │   ├── customers.py              # create_customer
+│   │   │   ├── charges.py                # create_charge, delete_charge, get_pix_qrcode
+│   │   │   └── exceptions.py             # AsaasAPIError
+│   │   └── supabase/
+│   │       └── supabase_storage.py       # SupabaseStorage — upload de PDFs
 │   ├── models/
-│   │   ├── __init__.py
 │   │   ├── usuario.py
 │   │   ├── evento.py
 │   │   ├── lote.py
 │   │   ├── ingresso.py
-│   │   ├── pedido.py
-│   │   ├── pagamento.py
-│   │   ├── cupom.py
-│   │   ├── cortesia.py
+│   │   ├── pedido.py                     # Pedido + PedidoItem
+│   │   ├── pagamento.py                  # Pagamento + Reembolso
+│   │   ├── cupom.py                      # modelo só (UC05 sem rotas)
+│   │   ├── cortesia.py                   # modelo só (UC06 sem rotas)
 │   │   ├── checkin.py
 │   │   ├── certificado.py
-│   │   └── foto.py
+│   │   ├── relatorio.py                  # modelo só (UC14 sem rotas)
+│   │   └── foto.py                       # FotoEvento + CompraFoto (UC08 sem rotas)
 │   ├── repositories/
-│   │   ├── __init__.py
-│   │   ├── base_repo.py               # CRUD genérico reutilizável
 │   │   ├── usuario_repo.py
 │   │   ├── evento_repo.py
 │   │   ├── lote_repo.py
-│   │   ├── ingresso_repo.py
 │   │   ├── pedido_repo.py
-│   │   ├── cupom_repo.py
-│   │   ├── cortesia_repo.py
-│   │   ├── checkin_repo.py
-│   │   ├── certificado_repo.py
-│   │   └── foto_repo.py
+│   │   ├── pagamento_repo.py
+│   │   └── ingresso_repo.py
+│   ├── reports/
+│   │   └── ingresso_pdf.py               # gerar_pdf_ingresso (UC12) + gerar_pdf_certificado (UC13)
 │   ├── schemas/
-│   │   ├── __init__.py
 │   │   ├── usuario.py
 │   │   ├── evento.py
 │   │   ├── lote.py
-│   │   ├── ingresso.py
 │   │   ├── pedido.py
-│   │   ├── pagamento.py
-│   │   ├── cupom.py
-│   │   ├── cortesia.py
-│   │   ├── checkin.py
-│   │   ├── certificado.py
-│   │   └── foto.py
+│   │   └── ingresso.py
 │   ├── service/
-│   │   ├── __init__.py
-│   │   ├── auth_service.py
+│   │   ├── auth_service.py               # JWT + bcrypt
 │   │   ├── evento_service.py
-│   │   ├── ingresso_service.py
+│   │   ├── lote_service.py
 │   │   ├── pedido_service.py
-│   │   ├── pagamento_service.py       # Orquestra fluxo de cobrança (usa integrations/asaas)
-│   │   ├── webhook_service.py         # Processa webhooks do Asaas
-│   │   ├── whatsapp_service.py        # Orquestra notificações (usa integrations/whatsapp)
-│   │   ├── cupom_service.py
-│   │   ├── cortesia_service.py
-│   │   ├── checkin_service.py
-│   │   ├── relatorio_service.py       # Coordena geração assíncrona de PDFs
-│   │   └── galeria_service.py         # Baixa prioridade
-│   ├── integrations/                  # Clientes HTTP de APIs externas — sem regra de negócio
-│   │   ├── __init__.py
-│   │   ├── asaas/
-│   │   │   ├── __init__.py
-│   │   │   ├── client.py              # httpx.AsyncClient + auth/timeout
-│   │   │   ├── customers.py           # create_customer, get_customer
-│   │   │   ├── payments.py            # create_payment, refund_payment
-│   │   │   ├── exceptions.py          # AsaasAPIError
-│   │   │   └── schemas.py             # DTOs Pydantic do Asaas
-│   │   ├── supabase/
-│   │   │   ├── __init__.py
-│   │   │   └── storage.py             # upload/download e URLs assinadas
-│   │   └── whatsapp/
-│   │       ├── __init__.py
-│   │       └── meta.py                # envio de mensagens via Meta Cloud API
-│   ├── reports/
-│   │   ├── __init__.py
-│   │   ├── ingresso_pdf.py            # UC12
-│   │   ├── certificado_pdf.py         # UC13
-│   │   └── relatorio_financeiro_pdf.py # UC14
-│   ├── __init__.py
+│   │   ├── pagamento_service.py          # criar_pagamento + processar_webhook (Asaas)
+│   │   ├── cancelamento_service.py       # aplicar_cancelamento (manual + OVERDUE)
+│   │   └── ingresso_service.py           # criar_ingressos_para_pedido + PDFs + validar_checkin
 │   └── main.py
-├── tests/                             # Espelha a estrutura de app/
-│   └── service/
-│       └── test_evento_service.py
-├── .env                               # Nunca commitar
-├── .env.example
+├── docs/                                 # project.md, requirements.md, roadmap.md, state.md
+├── Dockerfile
 ├── pyproject.toml
 ├── uv.lock
 └── CLAUDE.md
@@ -155,13 +111,26 @@ pampatickets/
 
 ## Variáveis de Ambiente
 
-Referência completa em `.env.example`:
+Referência completa em `.env.example`. Resumo:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/pampatickets
+# PostgreSQL (Docker Compose)
+POSTGRES_USER=pampa
+POSTGRES_PASSWORD=pampa
+POSTGRES_DB=pampatickets
+
+# Backend — FastAPI
+ASYNC_DATABASE_URL=postgresql+asyncpg://pampa:pampa@localhost:5432/pampatickets
+
+# JWT
 SECRET_KEY=sua-chave-secreta-jwt
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# Asaas (gateway de pagamento)
+ASAAS_API_KEY=sua-api-key-asaas
+ASAAS_BASE_URL_UAT=https://sandbox.asaas.com/api/v3
+ASAAS_WEBHOOK_TOKEN=token-para-validar-webhooks
 
 # Supabase Storage
 SUPABASE_URL=https://<project-id>.supabase.co
@@ -170,34 +139,39 @@ SUPABASE_BUCKET_INGRESSOS=ingressos
 SUPABASE_BUCKET_CERTIFICADOS=certificados
 SUPABASE_BUCKET_RELATORIOS=relatorios
 
-# Asaas
-ASAAS_API_KEY=sua-api-key-asaas
-ASAAS_BASE_URL_UAT=https://sandbox.asaas.com/api/v3
-ASAAS_WEBHOOK_TOKEN=token-para-validar-webhooks
-
-# Meta Cloud API — WhatsApp Business
-META_WHATSAPP_TOKEN=seu-token-de-acesso
-META_PHONE_NUMBER_ID=id-do-numero-whatsapp
-META_VERIFY_TOKEN=token-de-verificacao-webhook
+# Meta Cloud API — WhatsApp Business (UC15, ainda não implementado)
+# META_WHATSAPP_TOKEN=seu-token-de-acesso
+# META_PHONE_NUMBER_ID=id-do-numero-whatsapp
+# META_VERIFY_TOKEN=token-de-verificacao-webhook
 ```
 
 ---
 
 ## Como Rodar
 
+O projeto roda exclusivamente via Docker Compose. O `Makefile` na raiz expõe os comandos mais usados.
+
 ```bash
-# Instalar o uv
-curl -Ls https://astral.sh/uv/install.sh | sh
+# Subir tudo (postgres + api). Migrations rodam automaticamente no lifespan via init_db.
+make up
 
-# Instalar dependências
-uv sync
+# Logs da API em tempo real
+make logs-api
 
-# Aplicar migrações
-uv run alembic upgrade head
+# Shell psql no banco
+make shell-db
 
-# Iniciar servidor de desenvolvimento
-uv run uvicorn app.main:app --reload
+# Resetar o banco (DESTRUTIVO — apaga o volume postgres_data e re-cria do zero)
+make db-reset
 
-# Rodar testes
-uv run pytest
+# Lista todos os comandos disponíveis
+make help
+```
+
+Para criar uma nova migration manualmente:
+
+```bash
+make migration m="descrição da mudança"
+make migrate            # aplica
+make migrate-history    # histórico
 ```

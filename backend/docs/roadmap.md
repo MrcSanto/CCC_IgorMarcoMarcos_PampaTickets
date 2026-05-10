@@ -53,10 +53,11 @@ Participante finaliza compra
 
 | Evento | Ação no sistema |
 |---|---|
-| `PAYMENT_CONFIRMED` | Confirma pedido, gera ingresso PDF, notifica participante |
+| `PAYMENT_CONFIRMED` | Confirma pedido, cria ingressos com QR único, gera ingresso PDF, notifica participante |
 | `PAYMENT_RECEIVED` | Mesmo fluxo (Pix instantâneo) |
-| `PAYMENT_OVERDUE` | Pedido expirado, libera estoque do lote |
-| `PAYMENT_REFUNDED` | Confirma reembolso, notifica participante |
+| `PAYMENT_OVERDUE` | Cancela pedido, devolve estoque, deleta cobrança no Asaas |
+| `PAYMENT_REFUNDED` | Marca pedido como reembolsado e pagamento como estornado |
+| `PAYMENT_CREATED` | Ignorado (cobrança já registrada no fluxo síncrono); apenas log |
 
 ### Regras importantes
 - O endpoint `POST /webhooks/asaas` é **público** (sem JWT), mas valida o token enviado pelo Asaas no header.
@@ -71,7 +72,7 @@ O Asaas precisa de uma URL pública para disparar os webhooks. Use **ngrok**:
 ngrok config add-authtoken SEU_TOKEN
 ngrok http 8000
 # URL gerada ex: https://abc123.ngrok-free.app
-# Cadastrar no painel Asaas: https://abc123.ngrok-free.app/webhooks/asaas
+# Cadastrar no painel Asaas: https://abc123.ngrok-free.app/api/webhooks/asaas
 ```
 
 > No plano gratuito do ngrok a URL muda a cada reinicialização — atualizar no painel do Asaas quando necessário.
@@ -94,10 +95,12 @@ Todos os PDFs gerados são armazenados no Supabase Storage — nunca no servidor
 ### Nomenclatura dos arquivos
 
 ```
-ingressos/{evento_id}/{pedido_id}/{ingresso_id}.pdf
-certificados/{evento_id}/{usuario_id}.pdf
-relatorios/{evento_id}/{timestamp}.pdf
+ingressos/{ingresso_id}/ingresso_{ingresso_id}.pdf
+certificados/{ingresso_id}/certificado_{ingresso_id}.pdf
+relatorios/{evento_id}/{filename}.pdf
 ```
+
+> A subestrutura por `evento_id`/`pedido_id` foi planejada mas não implementada. Hoje o caminho é apenas `<bucket>/<ingresso_id>/<filename>`. Se a granularidade for útil para o frontend (ex: agrupar arquivos por evento), refatorar `supabase_storage.py` num PR separado.
 
 ### Regras de acesso
 - Ingressos e certificados: **URLs assinadas** com expiração (acesso temporário).

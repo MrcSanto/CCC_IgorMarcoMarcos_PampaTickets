@@ -1,12 +1,12 @@
 import io
+from datetime import datetime, timezone
 from typing import BinaryIO
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.pdfgen import canvas
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from app.models.ingresso import Ingresso
 
@@ -65,7 +65,7 @@ def gerar_pdf_ingresso(ingresso: Ingresso) -> BinaryIO:
     story.append(Spacer(1, 0.5*cm))
 
     # Dados do evento
-    evento = ingresso.pedido.lote.evento
+    evento = ingresso.lote.evento
     story.append(Paragraph(f"<b>Evento:</b> {evento.nome}", normal_style))
     story.append(Paragraph(f"<b>Data:</b> {evento.data_inicio.strftime('%d/%m/%Y %H:%M')}", normal_style))
     story.append(Paragraph(f"<b>Local:</b> {evento.local}", normal_style))
@@ -73,12 +73,12 @@ def gerar_pdf_ingresso(ingresso: Ingresso) -> BinaryIO:
 
     # Dados do ingresso
     story.append(Paragraph(f"<b>Código do Ingresso:</b> {ingresso.id}", normal_style))
-    story.append(Paragraph(f"<b>Lote:</b> {ingresso.pedido.lote.nome}", normal_style))
-    story.append(Paragraph(f"<b>Valor:</b> R$ {ingresso.pedido.lote.preco:.2f}", normal_style))
+    story.append(Paragraph(f"<b>Lote:</b> {ingresso.lote.nome}", normal_style))
+    story.append(Paragraph(f"<b>Valor:</b> R$ {ingresso.lote.preco:.2f}", normal_style))
     story.append(Spacer(1, 0.5*cm))
 
     # Dados do participante
-    usuario = ingresso.pedido.usuario
+    usuario = ingresso.participante
     story.append(Paragraph(f"<b>Participante:</b> {usuario.nome}", normal_style))
     story.append(Paragraph(f"<b>CPF:</b> {usuario.cpf_cnpj}", normal_style))
     story.append(Paragraph(f"<b>Email:</b> {usuario.email}", normal_style))
@@ -103,7 +103,7 @@ def gerar_pdf_ingresso(ingresso: Ingresso) -> BinaryIO:
     # Rodapé
     story.append(Spacer(1, 1*cm))
     story.append(Paragraph("PampaTickets - Sistema de Gestão de Eventos", styles['Italic']))
-    story.append(Paragraph("Gerado em: " + ingresso.created_at.strftime("%d/%m/%Y %H:%M"), styles['Italic']))
+    story.append(Paragraph("Gerado em: " + ingresso.emitido_em.strftime("%d/%m/%Y %H:%M"), styles['Italic']))
 
     # Gerar PDF
     doc.build(story)
@@ -160,8 +160,8 @@ def gerar_pdf_certificado(ingresso: Ingresso) -> BinaryIO:
     story.append(Paragraph("CERTIFICADO", title_style))
 
     # Texto do certificado
-    evento = ingresso.pedido.lote.evento
-    usuario = ingresso.pedido.usuario
+    evento = ingresso.lote.evento
+    usuario = ingresso.participante
 
     story.append(Paragraph("Certificamos que", cert_style))
     story.append(Paragraph(f"<b>{usuario.nome}</b>", cert_style))
@@ -173,7 +173,7 @@ def gerar_pdf_certificado(ingresso: Ingresso) -> BinaryIO:
     story.append(Spacer(1, 2*cm))
 
     # Data de emissão
-    story.append(Paragraph(f"Certificado emitido em {ingresso.updated_at.strftime('%d/%m/%Y')}", cert_style))
+    story.append(Paragraph(f"Certificado emitido em {datetime.now(timezone.utc).strftime('%d/%m/%Y')}", cert_style))
 
     # Assinatura (placeholder)
     story.append(Spacer(1, 2*cm))

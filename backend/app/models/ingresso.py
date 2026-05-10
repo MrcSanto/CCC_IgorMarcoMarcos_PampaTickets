@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -35,3 +35,7 @@ class Ingresso(Base):
     emitido_em: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+
+    participante: Mapped["Usuario"] = relationship("Usuario", lazy="noload")  # noqa: F821
+    pedido_item: Mapped["PedidoItem"] = relationship("PedidoItem", lazy="noload")  # noqa: F821
+    lote: Mapped["Lote"] = relationship("Lote", lazy="noload")  # noqa: F821

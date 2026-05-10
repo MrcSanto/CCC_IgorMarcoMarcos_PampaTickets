@@ -12,7 +12,7 @@ from sqlalchemy import (
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -41,3 +41,5 @@ class Lote(Base):
     criado_em: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+
+    evento: Mapped["Evento"] = relationship("Evento", lazy="noload")  # noqa: F821

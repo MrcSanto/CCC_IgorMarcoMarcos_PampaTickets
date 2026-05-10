@@ -7,7 +7,7 @@
 
 ## Última atualização
 
-**Data:** 26/04/2026
+**Data:** 10/05/2026
 **Responsável:** Marco Antonio Santolin
 
 ---
@@ -17,15 +17,15 @@
 - [x] UC01 — Autenticação JWT
 - [x] UC02 — Gerenciamento de Eventos
 - [x] UC03 — Gerenciamento de Ingressos/Lotes
-- [ ] UC04 — Check-in via QR Code
+- [x] UC04 — Check-in via QR Code
 - [ ] UC05 — Cupons de desconto
 - [ ] UC06 — Cortesias
 - [x] UC07 — Busca e Compra de Ingressos
 - [x] UC09 — Pagamento via Asaas
 - [ ] UC10 — Reembolso
-- [ ] UC11 — Webhooks do Asaas *(parcial — `pagamento_service.processar_webhook` pronto; falta rota `/webhooks/asaas` e validação do header)*
-- [ ] UC12 — Geração de Ingresso PDF
-- [ ] UC13 — Geração de Certificado PDF
+- [x] UC11 — Webhooks do Asaas
+- [x] UC12 — Geração de Ingresso PDF
+- [x] UC13 — Geração de Certificado PDF
 - [ ] UC14 — Relatório Financeiro PDF
 - [ ] UC15 — Notificações WhatsApp
 - [ ] UC08 — Galeria de Fotos (baixa prioridade)
@@ -34,14 +34,17 @@
 
 ## Em progresso
 
-UC11 — webhook do Asaas. Última peça para o ciclo end-to-end: participante paga → Asaas notifica → pedido vira PAGO.
+Ciclo end-to-end de pagamento agora fechado e validado em sandbox: pedido → Asaas → webhook → ingressos criados com QR único → PDFs (quando Supabase configurado). Próxima frente é cancelar/reembolsar o que já foi pago e habilitar regras comerciais (cupom/cortesia).
 
 ---
 
 ## Próximo passo
 
-1. Implementar `POST /webhooks/asaas` (UC11) — sem JWT, valida header `asaas-access-token`, chama `pagamento_service.processar_webhook` (já existe).
-2. Remover a rota temporária [app/api/routes/pagamentos.py](../app/api/routes/pagamentos.py) (router já comentado em `main.py`) após validar o fluxo real.
+1. **UC10 — Reembolso**: aproveitar a integração Asaas existente. Falta `pagamento_service.solicitar_reembolso` + rota `POST /api/pedidos/{id}/reembolso`. Quando `PAYMENT_REFUNDED` chegar, marcar também os ingressos como `CANCELADO` (hoje só atualiza pedido/pagamento).
+2. **UC05 — Cupons de desconto**: modelo `Cupom` já existe em [app/models/cupom.py](../app/models/cupom.py); falta repositório, service, rotas CRUD e aplicação no fluxo de `POST /api/pedidos`.
+3. **UC06 — Cortesias**: modelo `Cortesia` já existe em [app/models/cortesia.py](../app/models/cortesia.py); falta CRUD para o organizador emitir.
+4. **UC14 — Relatório Financeiro PDF**: reaproveitar `app/reports/` e `supabase_storage` introduzidos no UC12/UC13.
+5. **UC15 — Notificações WhatsApp**: criar `app/integrations/whatsapp/` (Meta Cloud API) e disparar em webhook/check-in/pagamento.
 
 ---
 
@@ -65,10 +68,26 @@ UC11 — webhook do Asaas. Última peça para o ciclo end-to-end: participante p
 - **Celular não-único** (26/04/2026): removido `unique=True` de `usuarios.celular` — múltiplas contas podem compartilhar o mesmo número (migration gerada).
 - **PIX QR Code** (26/04/2026): `POST /api/pedidos` retorna campo `pix_qrcode` (`encodedImage` + `payload`) quando `metodo == PIX`; `null` para outros métodos. Falha na busca do QR code é silenciada com `logger.warning` — não interrompe a criação do pedido.
 - **Ruff** (26/04/2026): configurado em `pyproject.toml` com `exclude = ["alembic/versions"]` — migrations são geradas automaticamente e não devem ser lintadas.
-
----
-
-## Problemas em aberto
+- **CORS habilitado** (29/04/2026 — MarcosP, commit `d177603`): `CORSMiddleware` registrado em [app/main.py](../app/main.py) permitindo o frontend local consumir a API. Origens precisam ser revistas antes de qualquer deploy.
+- **Validação Mod 11 de CPF/CNPJ** (29/04/2026 — MarcosP): `app/core/validators.py` rejeita documentos inválidos antes de bater no Asaas. Aplicado em `schemas/usuario.py` e propagado por `auth_service.py`.
+- **Tratamento de erros do Asaas** (29/04/2026 — MarcosP): `app/integrations/asaas/exceptions.py` mapeia respostas do gateway — 4xx vira `422` com detalhe original (mensagem acionável no frontend) e 5xx vira `502` genérico. Aplicado em `pedido_service.py`.
+- **UC11 completo — Webhook Asaas** (03/05/2026 — Igor Zanette, commit `2b1c43e`): rota pública `POST /api/webhooks/asaas` em [app/api/routes/webhooks.py](../app/api/routes/webhooks.py), valida header `asaas-access-token` e chama `pagamento_service.processar_webhook`. Rota temporária `POST /api/pagamentos` removida do `main.py`.
+- **UC04 completo — Check-in via QR Code** (03/05/2026 — Igor Zanette): rota `POST /checkin` em [app/api/routes/checkin.py](../app/api/routes/checkin.py). `ingresso_service.validar_checkin` marca o ingresso como `UTILIZADO` e dispara geração automática de certificado PDF.
+- **UC12 completo — Ingresso em PDF** (03/05/2026 — Igor Zanette): gerador em [app/reports/ingresso_pdf.py](../app/reports/ingresso_pdf.py) (`gerar_pdf_ingresso`). Upload via [app/integrations/supabase_storage.py](../app/integrations/supabase_storage.py); URL persistida em `ingressos.pdf_url` por `ingresso_repo.update_pdf_url`. Disparado pelo webhook quando o pedido vira `PAGO`.
+- **UC13 completo — Certificado em PDF** (03/05/2026 — Igor Zanette): `gerar_pdf_certificado` em `app/reports/ingresso_pdf.py`; upload no bucket `certificados/` via `supabase_storage.upload_certificado_pdf`. Disparado automaticamente após check-in bem-sucedido.
+- **Supabase Storage** (03/05/2026 — Igor Zanette): camada `app/integrations/supabase_storage.py` isola o SDK; buckets configuráveis em `core/config.py` (`SUPABASE_BUCKET_INGRESSOS`, `SUPABASE_BUCKET_CERTIFICADOS`). Service degrada silenciosamente para `None` quando `SUPABASE_URL`/`SUPABASE_KEY` não estão configurados — não bloqueia desenvolvimento local.
+- **Frontend containerizado** (09/05/2026 — Marco): `frontend/Dockerfile` (node:22-alpine) e serviço `frontend` no `docker-compose.yml` expondo `5173`. Vite configurado com `host: 0.0.0.0` e `strictPort` para acesso a partir do container.
+- **Reorganização do Supabase** (10/05/2026 — Marco): pasta `app/integrations/supabase/` (com `__init__.py`) substitui o módulo solto `app/integrations/supabase_storage.py`. Import em `ingresso_service.py` corrigido (estava `backend.app.integrations...` — caminho de filesystem em vez de import Python).
+- **Endpoint de health do webhook** (10/05/2026 — Marco): `GET /api/webhooks/asaas` retorna `{"status": "ok"}` para validar túnel ngrok antes de o Asaas mandar qualquer POST.
+- **Make `db-reset`** (10/05/2026 — Marco): novo target `make db-reset` (`docker compose down -v && up -d`) zera o volume `postgres_data` e reaplica migrations. Destrutivo, dev-only.
+- **Bug timezone-aware no `pago_em`** (10/05/2026 — Marco): asyncpg estourava `can't subtract offset-naive and offset-aware datetimes` ao salvar `pago_em` no webhook PAYMENT_CONFIRMED. Coluna é `TIMESTAMP WITHOUT TIME ZONE` mas o service passava `datetime.now(timezone.utc)` (tz-aware). Corrigido com `.replace(tzinfo=None)` no único call site (`pagamento_service.py`). Decisão: manter o padrão naive (todas as colunas DateTime do projeto são naive); refatorar para `DateTime(timezone=True)` em todas elas é trabalho maior, fica como dívida.
+- **Depuração do webhook** (10/05/2026 — Marco): `webhooks.py` agora loga o payload bruto recebido (`logger.info`) e usa `logger.exception` no `try/except` ao redor de `processar_webhook` — antes só vinha "500 sem traceback" no log. Comentário enganoso "Log do erro (já é feito pelo middleware)" removido — o `LoggingMiddleware` só loga a linha de status, não o stack.
+- **Helper `cancelamento_service.aplicar_cancelamento`** (10/05/2026 — Marco): `app/service/cancelamento_service.py` centraliza o fluxo "cancelar pedido completo" (devolve estoque via `lote_repo.decrementar_vendidas`, deleta cobrança no Asaas com `try/except AsaasAPIError`, atualiza pagamento e pedido). Usado por (a) `pedido_service.cancelar` (cancelamento manual, com `motivo_status_pagamento=CANCELADO`) e (b) webhook `PAYMENT_OVERDUE` (com `motivo=RECUSADO`). Idempotente — se pedido já está `CANCELADO`, retorna sem fazer nada. **Bug grave resolvido**: antes do refator, o webhook OVERDUE só atualizava status no banco, deixando lugares ocupados pra sempre e charges penduradas no Asaas.
+- **`PAYMENT_CREATED` no webhook** (10/05/2026 — Marco): adicionado `elif evento == "PAYMENT_CREATED"` em `processar_webhook` que apenas faz `logger.info` indicando ignorado de propósito (cobrança já é registrada no fluxo síncrono de `criar_pagamento`). Evita confusão para quem ler o código depois.
+- **UC07 — Criação de Ingressos pós-pagamento** (10/05/2026 — Marco): no webhook `PAYMENT_CONFIRMED/RECEIVED`, `ingresso_service.criar_ingressos_para_pedido` cria 1 `Ingresso` por unidade em cada `PedidoItem` (`item.quantidade` ingressos), com `qr_code_hash` único via `secrets.token_urlsafe(32)` e status `ATIVO`. Idempotente (se ingressos já existem para o pedido, retorna os existentes). Adicionada idempotência por status do pagamento no início do branch (`if pagamento.status == APROVADO: return`) para tolerar re-envio do webhook.
+- **Endpoints de Ingresso** (10/05/2026 — Marco): `GET /api/ingressos/meus` (lista todos do participante autenticado, ordenados por `emitido_em` desc) e `GET /api/ingressos/{id}` (detalhe com 403 se não for o dono, 404 se não existir). Schema `IngressoResponse` em [app/schemas/ingresso.py](../app/schemas/ingresso.py) inclui `qr_code_hash`, `pdf_url`, `status` e dados desnormalizados de evento/lote para a tela do app.
+- **Cadeia de bugs no PDF/Check-in resolvida** (10/05/2026 — Marco): o gerador de PDF e `validar_checkin` acessavam caminhos inexistentes (`ingresso.pedido.lote.evento`, `ingresso.pedido.usuario`, `ingresso.created_at`) — Ingresso tem `pedido_item_id`, não `pedido_id`, e os relationships não existiam. Tudo era engolido pelo `try/except` em `gerar_pdf_ingresso_upload`. Corrigido adicionando relationships nos models (`Ingresso.participante`, `Ingresso.lote`, `Ingresso.pedido_item`, `PedidoItem.lote`, `Lote.evento`) — sem migration, é apenas metadata SQLAlchemy. `ingresso_repo.get_with_relations` reescrito com `selectinload` correto. `get_by_pedido_id` corrigido para fazer JOIN em `PedidoItem` (antes filtrava por `Ingresso.pedido_id` que não existe — sempre retornava lista vazia).
+- **Relationships com warning de overlap evitado** (10/05/2026 — Marco): `PedidoItem.pedido` foi adicionado e depois removido (não era usado em lugar nenhum) — gerava `SAWarning` por conflitar com `Pedido.itens`. Sobrou só `PedidoItem.lote`. Outros relationships novos não conflitam porque o lado oposto não tem inverso definido.
 
 - **Testes**: ausência de suíte de testes para o fluxo de autenticação (UC01).
 - **Refresh token**: definir se será implementado e qual estratégia (rotate/revoke).
@@ -76,5 +95,10 @@ UC11 — webhook do Asaas. Última peça para o ciclo end-to-end: participante p
 - **Validação de força de senha** no cadastro.
 - **Migrações Alembic**: confirmar versionamento e execução automática via `make up`.
 - ~~**Logs estruturados**~~ resolvido: loguru + `LoggingMiddleware` loga cada request. Tratamento global de exceções da API ainda pendente.
-- **CORS**: revisar origens permitidas antes de qualquer deploy.
+- **CORS em produção**: middleware habilitado, mas as origens precisam ser revistas antes de qualquer deploy.
 - **Seed de dados** para desenvolvimento (usuário admin inicial).
+- **Modelos sem rotas**: `Cupom` (UC05), `Cortesia` (UC06), `Reembolso` (UC10), `Relatorio` (UC14), `FotoEvento`/`CompraFoto` (UC08) — modelos ORM existem mas faltam repositório/service/rotas.
+- **UC15 não iniciado**: integração com Meta Cloud API (WhatsApp) precisa ser criada do zero em `app/integrations/whatsapp/`.
+- **`PAYMENT_REFUNDED` não cancela ingressos**: hoje só atualiza pedido para `REEMBOLSADO` e pagamento para `ESTORNADO`; os ingressos ficam `ATIVO` (entram no evento). Resolver junto com UC10.
+- **`gerar_pdf_ingresso_upload` engole exceções silenciosamente**: o `try/except: return None` em `ingresso_service.py` esconde qualquer falha na geração de PDF. Trocar por `logger.exception` para diagnosticar problemas reais no Supabase.
+- **Datetimes naive vs aware**: todas as colunas `DateTime` do projeto são naive (`TIMESTAMP WITHOUT TIME ZONE`), mas o código quase sempre usa `datetime.now(timezone.utc)`. Convivendo via `.replace(tzinfo=None)` no único call site. Refatorar para `DateTime(timezone=True)` em todos os models seria mais correto, mas exige migration grande.

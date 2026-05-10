@@ -1,4 +1,4 @@
-.PHONY: help install dev build up down restart logs logs-api logs-db ps shell-api shell-db migrate migrate-down migrate-history migration test lint format destroy
+.PHONY: help install dev build up down restart logs logs-api logs-db ps shell-api shell-db migrate migrate-down migrate-history migration test lint format destroy db-reset
 
 DC = docker compose
 BACKEND_DIR := backend
@@ -19,6 +19,7 @@ help:
 	@echo "  ps                   Lista os containers em execução"
 	@echo "  shell-api            Abre shell no container da API"
 	@echo "  shell-db             Abre psql no container do banco"
+	@echo "  db-reset             Apaga o volume do banco e sobe tudo do zero (DESTRUTIVO)"
 	@echo ""
 	@echo "  Migrações"
 	@echo "  ---------"
@@ -67,6 +68,10 @@ shell-api:
 
 shell-db:
 	$(DC) exec db psql -U $${POSTGRES_USER:-pampa} -d $${POSTGRES_DB:-pampatickets}
+
+db-reset:
+	$(DC) down -v
+	$(DC) up -d
 
 # --- Migrações ---
 

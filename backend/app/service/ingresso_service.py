@@ -1,11 +1,13 @@
+import secrets
+import uuid
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.integrations.supabase_storage import supabase_storage
+from app.integrations.supabase.supabase_storage import supabase_storage
 from app.models.ingresso import Ingresso, StatusIngresso
 from app.reports.ingresso_pdf import gerar_pdf_certificado, gerar_pdf_ingresso
-from app.repositories import ingresso_repo
+from app.repositories import ingresso_repo, pedido_repo
 
 
 async def gerar_pdf_ingresso_upload(
@@ -132,11 +134,45 @@ async def validar_checkin(
 
         return {
             "ingresso_id": ingresso.id,
-            "evento_nome": ingresso.pedido.lote.evento.nome,
-            "participante_nome": ingresso.pedido.usuario.nome,
+            "evento_nome": ingresso.lote.evento.nome,
+            "participante_nome": ingresso.participante.nome,
             "certificado_url": certificado_url
         }
 
     except Exception as e:
         # Log do erro
         return None
+
+
+async def criar_ingressos_para_pedido(
+    db: AsyncSession, pedido_id: uuid.UUID
+) -> list[Ingresso]:
+    """
+    Cria 1 Ingresso por unidade em cada PedidoItem do pedido.
+    Idempotente: se já existem ingressos para o pedido, retorna os existentes.
+    """
+    pedido = await pedido_repo.get_by_id_com_itens(db, pedido_id)
+    if pedido is None:
+        return []
+
+    existentes = await ingresso_repo.get_by_pedido_id(db, pedido_id)
+    if existentes:
+        return existentes
+
+    ingressos: list[Ingresso] = []
+    for item in pedido.itens:
+        for _ in range(item.quantidade):
+            ing = Ingresso(
+                pedido_item_id=item.id,
+                lote_id=item.lote_id,
+                participante_id=pedido.participante_id,
+                qr_code_hash=secrets.token_urlsafe(32),
+                status=StatusIngresso.ATIVO,
+            )
+            db.add(ing)
+            ingressos.append(ing)
+
+    await db.commit()
+    for ing in ingressos:
+        await db.refresh(ing)
+    return ingressos

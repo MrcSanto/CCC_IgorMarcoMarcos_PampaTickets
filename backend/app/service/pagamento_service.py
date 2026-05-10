@@ -1,13 +1,14 @@
 from datetime import datetime, timezone
 
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.asaas import charges as asaas_charges
 from app.models.pagamento import MetodoPagamento, StatusPagamento
 from app.models.pedido import Pedido, StatusPedido
-from app.repositories import pagamento_repo
+from app.repositories import ingresso_repo, pagamento_repo, pedido_repo
+from app.service import cancelamento_service, ingresso_service
 from app.service.ingresso_service import gerar_pdf_ingresso_upload
-from app.repositories import ingresso_repo
 
 
 async def criar_pagamento(
@@ -55,25 +56,44 @@ async def processar_webhook(db: AsyncSession, *, evento: str, payment_id: str) -
         return
 
     if evento in ("PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"):
+        if pagamento.status == StatusPagamento.APROVADO:
+            logger.info(
+                "{} ignorado — pagamento {} já aprovado",
+                evento,
+                payment_id,
+            )
+            return
+
         await pagamento_repo.update_status(
             db,
             pagamento,
             StatusPagamento.APROVADO,
-            pago_em=datetime.now(timezone.utc),
+            pago_em=datetime.now(timezone.utc).replace(tzinfo=None),
         )
         await _atualizar_status_pedido(db, pagamento.pedido_id, StatusPedido.PAGO)
 
-        # Gerar PDFs dos ingressos automaticamente
+        await ingresso_service.criar_ingressos_para_pedido(db, pagamento.pedido_id)
         await _gerar_pdfs_ingressos(db, pagamento.pedido_id)
 
     elif evento == "PAYMENT_OVERDUE":
-        await pagamento_repo.update_status(db, pagamento, StatusPagamento.RECUSADO)
-        await _atualizar_status_pedido(db, pagamento.pedido_id, StatusPedido.CANCELADO)
+        pedido = await pedido_repo.get_by_id_com_itens(db, pagamento.pedido_id)
+        if pedido is not None:
+            await cancelamento_service.aplicar_cancelamento(
+                db,
+                pedido=pedido,
+                motivo_status_pagamento=StatusPagamento.RECUSADO,
+            )
 
     elif evento == "PAYMENT_REFUNDED":
         await pagamento_repo.update_status(db, pagamento, StatusPagamento.ESTORNADO)
         await _atualizar_status_pedido(
             db, pagamento.pedido_id, StatusPedido.REEMBOLSADO
+        )
+
+    elif evento == "PAYMENT_CREATED":
+        logger.info(
+            "PAYMENT_CREATED ignorado — cobrança {} já registrada no fluxo síncrono",
+            payment_id,
         )
 
 

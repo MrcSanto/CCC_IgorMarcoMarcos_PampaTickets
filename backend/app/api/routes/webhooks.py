@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -8,6 +9,12 @@ from app.db.session import get_db
 from app.service.pagamento_service import processar_webhook
 
 router = APIRouter()
+
+
+@router.get("/webhooks/asaas", tags=["Webhooks"])
+async def asaas_webhook_health() -> dict[str, str]:
+    """Endpoint de teste — confirma que o webhook está acessível publicamente."""
+    return {"status": "ok", "message": "webhook asaas online"}
 
 
 @router.post("/webhooks/asaas", tags=["Webhooks"])
@@ -36,6 +43,8 @@ async def asaas_webhook(
     except Exception:
         raise HTTPException(status_code=400, detail="JSON inválido")
 
+    logger.info("Webhook Asaas recebido: {}", data)
+
     # Validar estrutura básica do webhook
     if "event" not in data or "payment" not in data:
         raise HTTPException(status_code=400, detail="Estrutura de webhook inválida")
@@ -47,8 +56,14 @@ async def asaas_webhook(
     try:
         await processar_webhook(db, evento=evento, payment_id=payment_id)
     except Exception as e:
-        # Log do erro (já é feito pelo middleware de logging)
-        raise HTTPException(status_code=500, detail=f"Erro ao processar webhook: {str(e)}")
+        logger.exception(
+            "Falha ao processar webhook Asaas | evento={} payment_id={}",
+            evento,
+            payment_id,
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao processar webhook: {str(e)}"
+        )
 
     # Retornar sucesso para o Asaas
     return {"status": "ok"}

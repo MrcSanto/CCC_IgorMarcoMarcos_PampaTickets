@@ -102,6 +102,8 @@ backend/
 │   │   ├── cancelamento_service.py       # aplicar_cancelamento (manual + OVERDUE)
 │   │   └── ingresso_service.py           # criar_ingressos_para_pedido + PDFs + validar_checkin
 │   └── main.py
+├── scripts/
+│   └── seed.py                           # Seed idempotente de usuários dev (make seed)
 ├── docs/                                 # project.md, requirements.md, roadmap.md, state.md
 ├── Dockerfile
 ├── pyproject.toml

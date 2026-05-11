@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from loguru import logger
 
 from app.api.middleware.logging import LoggingMiddleware
 from app.api.routes import auth, checkin, eventos, ingressos, lotes, pedidos, webhooks
@@ -43,6 +45,24 @@ app.include_router(pedidos.router, prefix="/api")
 app.include_router(webhooks.router, prefix="/api")
 app.include_router(checkin.router, prefix="/api")
 app.include_router(ingressos.router, prefix="/api")
+
+
+@app.exception_handler(Exception)
+async def excecao_nao_tratada(request: Request, exc: Exception) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", None)
+    logger.exception(
+        "Exceção não tratada | {} {} | request_id={}",
+        request.method,
+        request.url.path,
+        request_id,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Erro interno do servidor.",
+            "request_id": request_id,
+        },
+    )
 
 
 @app.get("/", tags=["Health Check"])

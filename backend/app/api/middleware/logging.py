@@ -10,6 +10,7 @@ from starlette.responses import Response
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         request_id = str(uuid.uuid4())[:8]
+        request.state.request_id = request_id
         start = time.perf_counter()
 
         response = await call_next(request)

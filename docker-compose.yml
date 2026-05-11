@@ -31,6 +31,9 @@ services:
       ASAAS_BASE_URL_UAT: ${ASAAS_BASE_URL_UAT}
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/.venv
 
   frontend:
     build: ./frontend

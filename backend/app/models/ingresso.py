@@ -36,6 +36,6 @@ class Ingresso(Base):
         DateTime, server_default=func.now(), nullable=False
     )
 
-    participante: Mapped["Usuario"] = relationship("Usuario", lazy="noload")  # noqa: F821
-    pedido_item: Mapped["PedidoItem"] = relationship("PedidoItem", lazy="noload")  # noqa: F821
-    lote: Mapped["Lote"] = relationship("Lote", lazy="noload")  # noqa: F821
+    participante: Mapped["Usuario"] = relationship("Usuario", lazy="raise")  # noqa: F821
+    pedido_item: Mapped["PedidoItem"] = relationship("PedidoItem", lazy="raise")  # noqa: F821
+    lote: Mapped["Lote"] = relationship("Lote", lazy="raise")  # noqa: F821

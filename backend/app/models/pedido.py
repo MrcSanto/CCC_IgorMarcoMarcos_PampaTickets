@@ -54,4 +54,4 @@ class PedidoItem(Base):
     quantidade: Mapped[int] = mapped_column(Integer, nullable=False)
     preco_unitario: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
-    lote: Mapped["Lote"] = relationship("Lote", lazy="noload")  # noqa: F821
+    lote: Mapped["Lote"] = relationship("Lote", lazy="raise")  # noqa: F821

@@ -8,11 +8,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.integrations.asaas import charges as asaas_charges
 from app.integrations.asaas.exceptions import AsaasAPIError
 from app.models.evento import StatusEvento
-from app.models.pagamento import MetodoPagamento
-from app.models.pagamento import StatusPagamento
+from app.models.ingresso import StatusIngresso
+from app.models.pagamento import MetodoPagamento, Reembolso, StatusPagamento
 from app.models.pedido import Pedido, PedidoItem, StatusPedido
 from app.models.usuario import Usuario
-from app.repositories import evento_repo, lote_repo, pagamento_repo, pedido_repo
+from app.repositories import (
+    evento_repo,
+    ingresso_repo,
+    lote_repo,
+    pagamento_repo,
+    pedido_repo,
+    reembolso_repo,
+)
 from app.schemas.pedido import PedidoCreate
 from app.service import cancelamento_service, pagamento_service
 
@@ -174,4 +181,53 @@ async def cancelar(
         db,
         pedido=pedido,
         motivo_status_pagamento=StatusPagamento.CANCELADO,
+    )
+
+
+async def reembolsar(
+    db: AsyncSession,
+    participante: Usuario,
+    pedido_id: uuid.UUID,
+    motivo: str | None,
+) -> Reembolso:
+    pedido = await pedido_repo.get_by_id_com_itens(db, pedido_id)
+    if pedido is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pedido não encontrado.",
+        )
+    if pedido.participante_id != participante.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este pedido.",
+        )
+    if pedido.status != StatusPedido.PAGO:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Apenas pedidos pagos podem ser reembolsados.",
+        )
+
+    ingressos = await ingresso_repo.get_by_pedido_id(db, pedido.id)
+    if any(i.status == StatusIngresso.UTILIZADO for i in ingressos):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Não é possível reembolsar pedido com ingresso já utilizado.",
+        )
+
+    pagamento = await pagamento_repo.get_by_pedido_id(db, pedido.id)
+    if pagamento is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Pedido sem pagamento associado.",
+        )
+
+    existente = await reembolso_repo.get_by_pagamento_id(db, pagamento.id)
+    if existente is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Reembolso já solicitado para este pedido.",
+        )
+
+    return await pagamento_service.solicitar_reembolso(
+        db, pagamento=pagamento, motivo=motivo
     )

@@ -42,4 +42,4 @@ class Lote(Base):
         DateTime, server_default=func.now(), nullable=False
     )
 
-    evento: Mapped["Evento"] = relationship("Evento", lazy="noload")  # noqa: F821
+    evento: Mapped["Evento"] = relationship("Evento", lazy="raise")  # noqa: F821

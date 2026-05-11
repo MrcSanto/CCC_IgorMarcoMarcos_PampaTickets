@@ -51,3 +51,17 @@ async def delete_charge(*, charge_id: str) -> bool:
         raise AsaasAPIError(response.status_code, response.text)
 
     return response.json()["deleted"]  # caso não encontrar o campo vai estourar um erro
+
+
+async def refund_charge(*, charge_id: str, value: float | None = None) -> dict:
+    """
+    Solicita reembolso de uma cobrança no Asaas.
+    `value` opcional permite reembolso parcial; sem ele, o Asaas reembolsa o total.
+    """
+    payload = {"value": value} if value is not None else {}
+    route = f"/payments/{charge_id}/refund"
+
+    response = await get_client().post(route, json=payload)
+    if response.is_error:
+        raise AsaasAPIError(response.status_code, response.text)
+    return response.json()

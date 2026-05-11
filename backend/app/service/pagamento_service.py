@@ -1,12 +1,19 @@
 from datetime import datetime, timezone
 
+from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.asaas import charges as asaas_charges
-from app.models.pagamento import MetodoPagamento, StatusPagamento
+from app.models.ingresso import StatusIngresso
+from app.models.pagamento import MetodoPagamento, Pagamento, Reembolso, StatusPagamento
 from app.models.pedido import Pedido, StatusPedido
-from app.repositories import ingresso_repo, pagamento_repo, pedido_repo
+from app.repositories import (
+    ingresso_repo,
+    pagamento_repo,
+    pedido_repo,
+    reembolso_repo,
+)
 from app.service import cancelamento_service, ingresso_service
 from app.service.ingresso_service import gerar_pdf_ingresso_upload
 
@@ -44,6 +51,30 @@ async def criar_pagamento(
 
 async def obter_pix_qrcode(charge_id: str) -> dict:
     return await asaas_charges.get_pix_qrcode(charge_id=charge_id)
+
+
+async def solicitar_reembolso(
+    db: AsyncSession, *, pagamento: Pagamento, motivo: str | None
+) -> Reembolso:
+    """
+    Solicita reembolso ao Asaas e registra o Reembolso no banco.
+    Não atualiza status do pedido/pagamento — isso ocorre quando o webhook
+    PAYMENT_REFUNDED confirmar a operação.
+    """
+    if pagamento.charge_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Pagamento sem cobrança no gateway.",
+        )
+
+    await asaas_charges.refund_charge(charge_id=pagamento.charge_id)
+
+    return await reembolso_repo.create(
+        db,
+        pagamento_id=pagamento.id,
+        valor=float(pagamento.valor),
+        motivo=motivo,
+    )
 
 
 async def processar_webhook(db: AsyncSession, *, evento: str, payment_id: str) -> None:
@@ -85,10 +116,24 @@ async def processar_webhook(db: AsyncSession, *, evento: str, payment_id: str) -
             )
 
     elif evento == "PAYMENT_REFUNDED":
+        if pagamento.status == StatusPagamento.ESTORNADO:
+            logger.info(
+                "PAYMENT_REFUNDED ignorado — pagamento {} já estornado", payment_id
+            )
+            return
+
         await pagamento_repo.update_status(db, pagamento, StatusPagamento.ESTORNADO)
         await _atualizar_status_pedido(
             db, pagamento.pedido_id, StatusPedido.REEMBOLSADO
         )
+
+        ingressos = await ingresso_repo.get_by_pedido_id(db, pagamento.pedido_id)
+        for ing in ingressos:
+            await ingresso_repo.update_status(db, ing.id, StatusIngresso.CANCELADO)
+
+        reembolso = await reembolso_repo.get_by_pagamento_id(db, pagamento.id)
+        if reembolso is not None and reembolso.processado_em is None:
+            await reembolso_repo.marcar_processado(db, reembolso)
 
     elif evento == "PAYMENT_CREATED":
         logger.info(

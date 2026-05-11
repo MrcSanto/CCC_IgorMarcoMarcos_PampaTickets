@@ -4,6 +4,7 @@ from fastapi import APIRouter, status
 
 from app.api.deps import CurrentUser, DbDep, ParticipanteUser
 from app.schemas.pedido import PedidoCriadoResponse, PedidoCreate, PedidoResponse
+from app.schemas.reembolso import ReembolsoCreate, ReembolsoResponse
 from app.service import pedido_service
 
 router = APIRouter(tags=["Pedidos"])
@@ -34,3 +35,19 @@ async def cancelar_pedido(
     pedido_id: uuid.UUID, db: DbDep, participante: ParticipanteUser
 ):
     return await pedido_service.cancelar(db, participante, pedido_id)
+
+
+@router.post(
+    "/pedidos/{pedido_id}/reembolso",
+    response_model=ReembolsoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def reembolsar_pedido(
+    pedido_id: uuid.UUID,
+    data: ReembolsoCreate,
+    db: DbDep,
+    participante: ParticipanteUser,
+):
+    return await pedido_service.reembolsar(
+        db, participante, pedido_id, motivo=data.motivo
+    )

@@ -11,12 +11,6 @@ from app.service.pagamento_service import processar_webhook
 router = APIRouter()
 
 
-@router.get("/webhooks/asaas", tags=["Webhooks"])
-async def asaas_webhook_health() -> dict[str, str]:
-    """Endpoint de teste — confirma que o webhook está acessível publicamente."""
-    return {"status": "ok", "message": "webhook asaas online"}
-
-
 @router.post("/webhooks/asaas", tags=["Webhooks"])
 async def asaas_webhook(
     request: Request,

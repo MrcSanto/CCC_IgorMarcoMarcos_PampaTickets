@@ -7,7 +7,7 @@
 
 ## Última atualização
 
-**Data:** 10/05/2026
+**Data:** 11/05/2026
 **Responsável:** Marco Antonio Santolin
 
 ---
@@ -22,7 +22,7 @@
 - [ ] UC06 — Cortesias
 - [x] UC07 — Busca e Compra de Ingressos
 - [x] UC09 — Pagamento via Asaas
-- [ ] UC10 — Reembolso
+- [x] UC10 — Reembolso
 - [x] UC11 — Webhooks do Asaas
 - [x] UC12 — Geração de Ingresso PDF
 - [x] UC13 — Geração de Certificado PDF
@@ -34,17 +34,18 @@
 
 ## Em progresso
 
-Ciclo end-to-end de pagamento agora fechado e validado em sandbox: pedido → Asaas → webhook → ingressos criados com QR único → PDFs (quando Supabase configurado). Próxima frente é cancelar/reembolsar o que já foi pago e habilitar regras comerciais (cupom/cortesia).
+Ciclo financeiro completo: compra → pagamento → cancelamento (manual e por OVERDUE) → reembolso. Falta validação end-to-end do UC10 em sandbox — o usuário marcou pra rodar depois.
 
 ---
 
 ## Próximo passo
 
-1. **UC10 — Reembolso**: aproveitar a integração Asaas existente. Falta `pagamento_service.solicitar_reembolso` + rota `POST /api/pedidos/{id}/reembolso`. Quando `PAYMENT_REFUNDED` chegar, marcar também os ingressos como `CANCELADO` (hoje só atualiza pedido/pagamento).
+1. **Validar UC10 em sandbox**: rodar o roteiro de smoke (POST /api/pedidos/{id}/reembolso) e confirmar que webhook PAYMENT_REFUNDED cancela ingressos.
 2. **UC05 — Cupons de desconto**: modelo `Cupom` já existe em [app/models/cupom.py](../app/models/cupom.py); falta repositório, service, rotas CRUD e aplicação no fluxo de `POST /api/pedidos`.
 3. **UC06 — Cortesias**: modelo `Cortesia` já existe em [app/models/cortesia.py](../app/models/cortesia.py); falta CRUD para o organizador emitir.
 4. **UC14 — Relatório Financeiro PDF**: reaproveitar `app/reports/` e `supabase_storage` introduzidos no UC12/UC13.
 5. **UC15 — Notificações WhatsApp**: criar `app/integrations/whatsapp/` (Meta Cloud API) e disparar em webhook/check-in/pagamento.
+6. **Reembolso em massa pelo organizador**: quando o organizador cancela um evento (`PATCH /api/eventos/{id}/cancelar`), os pedidos pagos do evento não são reembolsados automaticamente. Fluxo simétrico ao UC10 atual, mas iterando sobre todos os pedidos PAGO.
 
 ---
 
@@ -88,6 +89,15 @@ Ciclo end-to-end de pagamento agora fechado e validado em sandbox: pedido → As
 - **Endpoints de Ingresso** (10/05/2026 — Marco): `GET /api/ingressos/meus` (lista todos do participante autenticado, ordenados por `emitido_em` desc) e `GET /api/ingressos/{id}` (detalhe com 403 se não for o dono, 404 se não existir). Schema `IngressoResponse` em [app/schemas/ingresso.py](../app/schemas/ingresso.py) inclui `qr_code_hash`, `pdf_url`, `status` e dados desnormalizados de evento/lote para a tela do app.
 - **Cadeia de bugs no PDF/Check-in resolvida** (10/05/2026 — Marco): o gerador de PDF e `validar_checkin` acessavam caminhos inexistentes (`ingresso.pedido.lote.evento`, `ingresso.pedido.usuario`, `ingresso.created_at`) — Ingresso tem `pedido_item_id`, não `pedido_id`, e os relationships não existiam. Tudo era engolido pelo `try/except` em `gerar_pdf_ingresso_upload`. Corrigido adicionando relationships nos models (`Ingresso.participante`, `Ingresso.lote`, `Ingresso.pedido_item`, `PedidoItem.lote`, `Lote.evento`) — sem migration, é apenas metadata SQLAlchemy. `ingresso_repo.get_with_relations` reescrito com `selectinload` correto. `get_by_pedido_id` corrigido para fazer JOIN em `PedidoItem` (antes filtrava por `Ingresso.pedido_id` que não existe — sempre retornava lista vazia).
 - **Relationships com warning de overlap evitado** (10/05/2026 — Marco): `PedidoItem.pedido` foi adicionado e depois removido (não era usado em lugar nenhum) — gerava `SAWarning` por conflitar com `Pedido.itens`. Sobrou só `PedidoItem.lote`. Outros relationships novos não conflitam porque o lado oposto não tem inverso definido.
+- **UC10 completo — Reembolso** (10/05/2026 sessão 2 — Marco): nova rota `POST /api/pedidos/{pedido_id}/reembolso` (participante) com body `{"motivo": "..."}`. Fluxo: `pedido_service.reembolsar` valida (404/403, 409 se não-PAGO, 409 se algum ingresso UTILIZADO, 409 se reembolso duplicado, 409 se sem charge_id), depois `pagamento_service.solicitar_reembolso` chama `asaas_charges.refund_charge` (novo) e persiste `Reembolso`. Webhook `PAYMENT_REFUNDED` expandido: agora além de marcar pagamento ESTORNADO e pedido REEMBOLSADO, cancela todos os ingressos do pedido (`StatusIngresso.CANCELADO`) e atualiza `Reembolso.processado_em`. Idempotência por `pagamento.status == ESTORNADO`. Apenas reembolso total (Asaas suporta parcial via `value`, mas o domínio é ingresso inteiro).
+- **Novos arquivos** (10/05/2026 sessão 2): `app/repositories/reembolso_repo.py` (`create`, `get_by_pagamento_id`, `marcar_processado`), `app/schemas/reembolso.py` (`ReembolsoCreate`, `ReembolsoResponse`).
+- **Upload de PDF para Supabase funcionando** (11/05/2026 — Marco): 3 bugs resolvidos no `supabase_storage.py` que impediam o upload:
+  1. **Relationships `lazy="noload"` retornavam `None` mesmo com `selectinload`** — bloqueia o eager-load explicitamente, é mais agressivo do que parece. Trocado por `lazy="raise"` em `Ingresso.{participante,pedido_item,lote}`, `PedidoItem.lote` e `Lote.evento`. Com `raise`, esquecer um eager-load levanta `InvalidRequestError` (bug barulhento, não silencioso).
+  2. **`storage3` SDK não aceita `BytesIO`** (o que `ReportLab` retorna) — só aceita `bytes`/`BufferedReader`/`FileIO`. Helper `_to_bytes` no `supabase_storage.py` converte. Sem isso, o SDK fazia `open(BytesIO, "rb")` que estoura `TypeError: expected str, bytes or os.PathLike object`.
+  3. **`if response.status_code != 200`** não funciona no SDK atual — `UploadResponse` não tem esse campo. Removido; o SDK levanta exception sozinho em caso de erro.
+  4. **Adicionado `"upsert": "true"`** no `file_options` — sem isso, replay do mesmo webhook falhava com erro de duplicate. Com upsert, sobrescreve silenciosamente. Útil para replay no ngrok inspector durante dev.
+- **`try/except` engole-tudo virou `logger.exception`** (11/05/2026 — Marco): em `gerar_pdf_ingresso_upload`, o `except Exception: return None` engolia qualquer falha (foi o que escondeu os bugs acima por dias). Agora loga o traceback completo e continua degradando para `None`. Aplicar mesmo padrão em `gerar_pdf_certificado_upload` e `validar_checkin` quando houver bug a investigar.
+- **Plano de deploy — Supabase Postgres para produção** (11/05/2026 — Marco): decisão de **manter dev local em Docker Compose** (latência zero, isolamento entre devs, `make db-reset` instantâneo) e **migrar o banco para Supabase Postgres só na fase de deploy**. Aplicação já lê `ASYNC_DATABASE_URL` do `.env`, então a troca é só de variável de ambiente — sem mudança de código. Mesma conta Supabase que já está hospedando o Storage (`ingressos`, `certificados`, `relatorios` buckets). Auth próprio (JWT + bcrypt em `auth_service.py`) será mantido — não vamos usar Supabase Auth porque exigiria reescrever toda a camada. Reembolso/refund e Asaas Sandbox seguem iguais entre dev e prod (depois mudar para Asaas produção). Próximos passos: escolher plataforma de deploy (Railway/Render/Fly.io), configurar pooler do Supabase (porta 5432 em modo Transaction), atualizar `ASAAS_WEBHOOK_TOKEN` no painel Asaas com a URL pública do deploy.
 
 - **Testes**: ausência de suíte de testes para o fluxo de autenticação (UC01).
 - **Refresh token**: definir se será implementado e qual estratégia (rotate/revoke).
@@ -99,6 +109,6 @@ Ciclo end-to-end de pagamento agora fechado e validado em sandbox: pedido → As
 - **Seed de dados** para desenvolvimento (usuário admin inicial).
 - **Modelos sem rotas**: `Cupom` (UC05), `Cortesia` (UC06), `Reembolso` (UC10), `Relatorio` (UC14), `FotoEvento`/`CompraFoto` (UC08) — modelos ORM existem mas faltam repositório/service/rotas.
 - **UC15 não iniciado**: integração com Meta Cloud API (WhatsApp) precisa ser criada do zero em `app/integrations/whatsapp/`.
-- **`PAYMENT_REFUNDED` não cancela ingressos**: hoje só atualiza pedido para `REEMBOLSADO` e pagamento para `ESTORNADO`; os ingressos ficam `ATIVO` (entram no evento). Resolver junto com UC10.
-- **`gerar_pdf_ingresso_upload` engole exceções silenciosamente**: o `try/except: return None` em `ingresso_service.py` esconde qualquer falha na geração de PDF. Trocar por `logger.exception` para diagnosticar problemas reais no Supabase.
+- ~~**`PAYMENT_REFUNDED` não cancela ingressos**~~ resolvido no UC10: agora cancela todos os ingressos do pedido reembolsado.
+- ~~**`gerar_pdf_ingresso_upload` engole exceções silenciosamente**~~ resolvido em 11/05/2026: agora usa `logger.exception` no except. `gerar_pdf_certificado_upload` e `validar_checkin` ainda têm o padrão antigo — trocar quando aparecer bug a investigar.
 - **Datetimes naive vs aware**: todas as colunas `DateTime` do projeto são naive (`TIMESTAMP WITHOUT TIME ZONE`), mas o código quase sempre usa `datetime.now(timezone.utc)`. Convivendo via `.replace(tzinfo=None)` no único call site. Refatorar para `DateTime(timezone=True)` em todos os models seria mais correto, mas exige migration grande.

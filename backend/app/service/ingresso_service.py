@@ -2,6 +2,7 @@ import secrets
 import uuid
 from typing import Optional
 
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.supabase.supabase_storage import supabase_storage
@@ -53,8 +54,8 @@ async def gerar_pdf_ingresso_upload(
 
         return pdf_url
 
-    except Exception as e:
-        # Log do erro (já feito pelo middleware)
+    except Exception:
+        logger.exception("Falha ao gerar/upload do PDF (ingresso_id={})", ingresso_id)
         return None
 
 
@@ -102,8 +103,8 @@ async def gerar_pdf_certificado_upload(
 
         return pdf_url
 
-    except Exception as e:
-        # Log do erro (já feito pelo middleware)
+    except Exception:
+        logger.exception("Falha ao gerar/upload do PDF (ingresso_id={})", ingresso_id)
         return None
 
 

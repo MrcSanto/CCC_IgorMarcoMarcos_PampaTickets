@@ -82,6 +82,7 @@ backend/
 │   │   ├── lote_repo.py
 │   │   ├── pedido_repo.py
 │   │   ├── pagamento_repo.py
+│   │   ├── reembolso_repo.py             # UC10
 │   │   └── ingresso_repo.py
 │   ├── reports/
 │   │   └── ingresso_pdf.py               # gerar_pdf_ingresso (UC12) + gerar_pdf_certificado (UC13)
@@ -90,13 +91,14 @@ backend/
 │   │   ├── evento.py
 │   │   ├── lote.py
 │   │   ├── pedido.py
+│   │   ├── reembolso.py                  # UC10
 │   │   └── ingresso.py
 │   ├── service/
 │   │   ├── auth_service.py               # JWT + bcrypt
 │   │   ├── evento_service.py
 │   │   ├── lote_service.py
 │   │   ├── pedido_service.py
-│   │   ├── pagamento_service.py          # criar_pagamento + processar_webhook (Asaas)
+│   │   ├── pagamento_service.py          # criar_pagamento + processar_webhook + solicitar_reembolso
 │   │   ├── cancelamento_service.py       # aplicar_cancelamento (manual + OVERDUE)
 │   │   └── ingresso_service.py           # criar_ingressos_para_pedido + PDFs + validar_checkin
 │   └── main.py

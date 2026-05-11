@@ -1,4 +1,4 @@
-.PHONY: help install dev build up down restart logs logs-api logs-db ps shell-api shell-db migrate migrate-down migrate-history migration test lint format destroy db-reset
+.PHONY: help install dev build up down restart logs logs-api logs-db ps shell-api shell-db migrate migrate-down migrate-history migration test lint format destroy db-reset ngrok
 
 DC = docker compose
 BACKEND_DIR := backend
@@ -20,6 +20,7 @@ help:
 	@echo "  shell-api            Abre shell no container da API"
 	@echo "  shell-db             Abre psql no container do banco"
 	@echo "  db-reset             Apaga o volume do banco e sobe tudo do zero (DESTRUTIVO)"
+	@echo "  ngrok                Expõe a porta 8000 publicamente via ngrok (foreground)"
 	@echo ""
 	@echo "  Migrações"
 	@echo "  ---------"
@@ -72,6 +73,9 @@ shell-db:
 db-reset:
 	$(DC) down -v
 	$(DC) up -d
+
+ngrok:
+	ngrok http 8000
 
 # --- Migrações ---
 

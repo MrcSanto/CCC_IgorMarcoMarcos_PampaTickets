@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.datetime_utils import aware_utc
 from app.integrations.asaas import charges as asaas_charges
 from app.integrations.asaas.exceptions import AsaasAPIError
 from app.models.evento import StatusEvento
@@ -38,7 +39,7 @@ async def criar(db: AsyncSession, participante: Usuario, data: PedidoCreate) -> 
             detail="Participante sem cadastro no gateway de pagamento.",
         )
 
-    agora = datetime.now(timezone.utc).replace(tzinfo=None)
+    agora = datetime.now(timezone.utc)
     lotes_validos: list[tuple] = []
     valor_total = 0.0
 
@@ -55,7 +56,9 @@ async def criar(db: AsyncSession, participante: Usuario, data: PedidoCreate) -> 
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Lote '{lote.nome}' não está disponível para venda.",
             )
-        if not (lote.data_inicio_venda <= agora <= lote.data_fim_venda):
+        inicio_venda = aware_utc(lote.data_inicio_venda)
+        fim_venda = aware_utc(lote.data_fim_venda)
+        if not (inicio_venda <= agora <= fim_venda):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Lote '{lote.nome}' está fora da janela de venda.",

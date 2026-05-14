@@ -140,8 +140,8 @@ async def validar_checkin(
             "certificado_url": certificado_url
         }
 
-    except Exception as e:
-        # Log do erro
+    except Exception:
+        logger.exception("Falha em validar_checkin (qr_code_hash={})", qr_code_hash)
         return None
 
 

@@ -18,7 +18,7 @@ class FotoEvento(Base):
     url_original: Mapped[str] = mapped_column(String(1000), nullable=False)
     preco: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     publicado_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
 

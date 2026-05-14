@@ -19,5 +19,5 @@ class Relatorio(Base):
     )
     pdf_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     gerado_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )

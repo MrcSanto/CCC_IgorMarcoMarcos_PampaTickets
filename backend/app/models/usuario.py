@@ -70,7 +70,7 @@ class Usuario(Base):
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     asaas_customer_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     @validates("cpf_cnpj")

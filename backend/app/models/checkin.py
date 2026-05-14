@@ -18,5 +18,5 @@ class Checkin(Base):
         ForeignKey("usuarios.id"), nullable=False
     )
     realizado_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )

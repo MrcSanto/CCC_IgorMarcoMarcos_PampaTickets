@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from app.models.lote import TipoLote
+from app.schemas._types import DatetimeUTC
 
 
 class LoteCreate(BaseModel):
@@ -11,8 +12,8 @@ class LoteCreate(BaseModel):
     tipo: TipoLote = Field(..., examples=["INTEIRA"])
     preco: float = Field(..., ge=0, examples=[120.00])
     quantidade_total: int = Field(..., ge=1, examples=[500])
-    data_inicio_venda: datetime = Field(..., examples=["2026-05-01T00:00:00"])
-    data_fim_venda: datetime = Field(..., examples=["2026-12-30T23:59:00"])
+    data_inicio_venda: DatetimeUTC = Field(..., examples=["2026-05-01T00:00:00"])
+    data_fim_venda: DatetimeUTC = Field(..., examples=["2026-12-30T23:59:00"])
     ativo: bool = Field(True, examples=[True])
 
     @model_validator(mode="after")
@@ -27,8 +28,8 @@ class LoteUpdate(BaseModel):
     tipo: TipoLote | None = None
     preco: float | None = Field(None, ge=0)
     quantidade_total: int | None = Field(None, ge=1)
-    data_inicio_venda: datetime | None = None
-    data_fim_venda: datetime | None = None
+    data_inicio_venda: DatetimeUTC | None = None
+    data_fim_venda: DatetimeUTC | None = None
 
     @model_validator(mode="after")
     def validar_periodo_venda(self) -> "LoteUpdate":

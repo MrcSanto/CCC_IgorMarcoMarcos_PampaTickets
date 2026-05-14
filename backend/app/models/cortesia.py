@@ -27,5 +27,5 @@ class Cortesia(Base):
         ForeignKey("ingressos.id"), nullable=True
     )
     emitida_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )

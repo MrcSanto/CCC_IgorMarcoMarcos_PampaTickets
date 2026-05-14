@@ -37,7 +37,7 @@ class Pagamento(Base):
         Enum(StatusPagamento), default=StatusPagamento.AGUARDANDO, nullable=False
     )
     valor: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    pago_em: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    pago_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Reembolso(Base):
@@ -49,4 +49,4 @@ class Reembolso(Base):
     )
     motivo: Mapped[str | None] = mapped_column(Text, nullable=True)
     valor_reembolsado: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    processado_em: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    processado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -3,6 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.datetime_utils import aware_utc
 from app.models.evento import Evento, StatusEvento
 from app.models.lote import Lote
 from app.models.usuario import Usuario
@@ -153,12 +154,16 @@ def _exigir_evento_gerenciavel(evento: Evento) -> None:
 
 
 def _validar_datas_venda(evento: Evento, data_inicio_venda, data_fim_venda) -> None:
-    if data_inicio_venda >= evento.data_inicio:
+    inicio_venda = aware_utc(data_inicio_venda)
+    fim_venda = aware_utc(data_fim_venda)
+    evento_inicio = aware_utc(evento.data_inicio)
+
+    if inicio_venda >= evento_inicio:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="data_inicio_venda deve ser anterior à data de início do evento.",
         )
-    if data_fim_venda > evento.data_inicio:
+    if fim_venda > evento_inicio:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="data_fim_venda não pode ser posterior à data de início do evento.",

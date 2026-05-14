@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, model_validator
 
 from app.models.evento import StatusEvento
+from app.schemas._types import DatetimeUTC
 
 
 class EventoCreate(BaseModel):
@@ -13,8 +14,8 @@ class EventoCreate(BaseModel):
     descricao: str | None = Field(
         None, examples=["Festival de música ao ar livre na orla do Guaíba"]
     )
-    data_inicio: datetime = Field(..., examples=["2026-12-31T20:00:00"])
-    data_fim: datetime = Field(..., examples=["2026-12-31T23:59:00"])
+    data_inicio: DatetimeUTC = Field(..., examples=["2026-12-31T20:00:00"])
+    data_fim: DatetimeUTC = Field(..., examples=["2026-12-31T23:59:00"])
     local: str = Field(
         ...,
         min_length=3,
@@ -32,8 +33,8 @@ class EventoCreate(BaseModel):
 class EventoUpdate(BaseModel):
     nome: str | None = Field(None, min_length=3, max_length=255)
     descricao: str | None = None
-    data_inicio: datetime | None = None
-    data_fim: datetime | None = None
+    data_inicio: DatetimeUTC | None = None
+    data_fim: DatetimeUTC | None = None
     local: str | None = Field(None, min_length=3, max_length=500)
 
     @model_validator(mode="after")

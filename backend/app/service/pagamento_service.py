@@ -99,7 +99,7 @@ async def processar_webhook(db: AsyncSession, *, evento: str, payment_id: str) -
             db,
             pagamento,
             StatusPagamento.APROVADO,
-            pago_em=datetime.now(timezone.utc).replace(tzinfo=None),
+            pago_em=datetime.now(timezone.utc),
         )
         await _atualizar_status_pedido(db, pagamento.pedido_id, StatusPedido.PAGO)
 
@@ -163,6 +163,7 @@ async def _gerar_pdfs_ingressos(db: AsyncSession, pedido_id: str) -> None:
         for ingresso in ingressos:
             await gerar_pdf_ingresso_upload(db, str(ingresso.id))
 
-    except Exception as e:
-        # Log do erro, mas não falha o webhook
-        pass
+    except Exception:
+        logger.exception(
+            "Falha ao gerar PDFs dos ingressos do pedido {}", pedido_id
+        )

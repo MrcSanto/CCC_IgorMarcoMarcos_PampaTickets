@@ -3,6 +3,7 @@ Seed de dados para desenvolvimento. Idempotente — se o email já existe, pula.
 
 Uso: make seed
 """
+
 import asyncio
 
 from sqlalchemy import select
@@ -10,7 +11,6 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.usuario import PerfilUsuario, Usuario
 from app.service.auth_service import _hash_senha
-
 
 SEED_USERS = [
     {

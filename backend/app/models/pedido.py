@@ -36,7 +36,7 @@ class Pedido(Base):
         Enum(StatusPedido), default=StatusPedido.PENDENTE, nullable=False
     )
     criado_em: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     itens: Mapped[list["PedidoItem"]] = relationship("PedidoItem", lazy="noload")
 

@@ -47,4 +47,4 @@ dev = [
 ]
 
 [tool.ruff]
-exclude = ["alembic/versions"]
+extend-exclude = ["alembic/versions"]

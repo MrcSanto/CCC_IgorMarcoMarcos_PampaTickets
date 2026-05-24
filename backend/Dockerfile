@@ -13,7 +13,6 @@ RUN uv sync --frozen --no-dev
 COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
-COPY scripts/ ./scripts/
 
 # Garante que o PATH inclui os binários do venv
 ENV PATH="/app/.venv/bin:$PATH"

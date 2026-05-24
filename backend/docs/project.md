@@ -115,8 +115,6 @@ backend/
 │   │   ├── cupom_service.py              # UC05 — CRUD + validar_e_calcular_desconto
 │   │   └── cortesia_service.py           # UC06 — emitir/listar/obter/cancelar (atômico)
 │   └── main.py
-├── scripts/
-│   └── seed.py                           # Seed idempotente de usuários dev (make seed)
 ├── docs/                                 # project.md, requirements.md, roadmap.md, state.md
 ├── Dockerfile
 ├── pyproject.toml

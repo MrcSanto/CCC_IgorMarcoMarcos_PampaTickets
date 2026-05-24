@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from loguru import logger
 
 from app.api.middleware.logging import LoggingMiddleware
@@ -75,6 +76,14 @@ async def excecao_nao_tratada(request: Request, exc: Exception) -> JSONResponse:
             "request_id": request_id,
         },
     )
+
+
+FAVICON_PATH = Path(__file__).parent / "static" / "favicon.svg"
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> FileResponse:
+    return FileResponse(FAVICON_PATH, media_type="image/svg+xml")
 
 
 @app.get("/", tags=["Health Check"])

@@ -36,7 +36,9 @@ class Cupom(Base):
     valor_desconto: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     quantidade_maxima: Mapped[int | None] = mapped_column(Integer, nullable=True)
     quantidade_usada: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    valido_ate: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    valido_ate: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

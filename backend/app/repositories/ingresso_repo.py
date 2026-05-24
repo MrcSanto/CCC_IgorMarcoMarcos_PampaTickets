@@ -62,9 +62,7 @@ async def update_status(
         await db.commit()
 
 
-async def get_by_pedido_id(
-    db: AsyncSession, pedido_id: uuid.UUID
-) -> list[Ingresso]:
+async def get_by_pedido_id(db: AsyncSession, pedido_id: uuid.UUID) -> list[Ingresso]:
     """
     Busca todos os ingressos de um pedido (via JOIN em PedidoItem,
     já que Ingresso aponta para PedidoItem, não diretamente para Pedido).

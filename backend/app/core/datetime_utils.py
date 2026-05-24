@@ -1,4 +1,5 @@
 """Utilitários para manipulação de datetime."""
+
 from datetime import datetime, timezone
 
 

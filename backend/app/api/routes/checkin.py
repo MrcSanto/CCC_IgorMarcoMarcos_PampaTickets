@@ -28,12 +28,11 @@ async def checkin_ingresso(
 
     if resultado is None:
         raise HTTPException(
-            status_code=400,
-            detail="Ingresso inválido, expirado ou já utilizado"
+            status_code=400, detail="Ingresso inválido, expirado ou já utilizado"
         )
 
     return {
         "status": "success",
         "message": "Check-in realizado com sucesso",
-        "data": resultado
+        "data": resultado,
     }

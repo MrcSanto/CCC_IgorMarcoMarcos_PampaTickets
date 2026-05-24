@@ -33,9 +33,7 @@ async def get_by_pagamento_id(
     return result.scalar_one_or_none()
 
 
-async def marcar_processado(
-    db: AsyncSession, reembolso: Reembolso
-) -> Reembolso:
+async def marcar_processado(db: AsyncSession, reembolso: Reembolso) -> Reembolso:
     reembolso.processado_em = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(reembolso)

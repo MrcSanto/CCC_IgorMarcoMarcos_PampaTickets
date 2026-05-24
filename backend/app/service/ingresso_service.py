@@ -12,8 +12,7 @@ from app.repositories import ingresso_repo, pedido_repo
 
 
 async def gerar_pdf_ingresso_upload(
-    db: AsyncSession,
-    ingresso_id: str
+    db: AsyncSession, ingresso_id: str
 ) -> Optional[str]:
     """
     Gera PDF do ingresso e faz upload para Supabase Storage.
@@ -28,7 +27,12 @@ async def gerar_pdf_ingresso_upload(
     try:
         # Verificar se Supabase está configurado
         from app.core.config import settings
-        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY or supabase_storage is None:
+
+        if (
+            not settings.SUPABASE_URL
+            or not settings.SUPABASE_KEY
+            or supabase_storage is None
+        ):
             return None
 
         # Buscar ingresso com relacionamentos
@@ -44,9 +48,7 @@ async def gerar_pdf_ingresso_upload(
 
         # Upload para Supabase
         pdf_url = await supabase_storage.upload_ingresso_pdf(
-            file=pdf_buffer,
-            filename=filename,
-            ingresso_id=ingresso_id
+            file=pdf_buffer, filename=filename, ingresso_id=ingresso_id
         )
 
         # Atualizar URL no banco
@@ -60,8 +62,7 @@ async def gerar_pdf_ingresso_upload(
 
 
 async def gerar_pdf_certificado_upload(
-    db: AsyncSession,
-    ingresso_id: str
+    db: AsyncSession, ingresso_id: str
 ) -> Optional[str]:
     """
     Gera PDF do certificado e faz upload para Supabase Storage.
@@ -76,7 +77,12 @@ async def gerar_pdf_certificado_upload(
     try:
         # Verificar se Supabase está configurado
         from app.core.config import settings
-        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY or supabase_storage is None:
+
+        if (
+            not settings.SUPABASE_URL
+            or not settings.SUPABASE_KEY
+            or supabase_storage is None
+        ):
             return None
 
         # Buscar ingresso com relacionamentos
@@ -92,9 +98,7 @@ async def gerar_pdf_certificado_upload(
 
         # Upload para Supabase
         pdf_url = await supabase_storage.upload_certificado_pdf(
-            file=pdf_buffer,
-            filename=filename,
-            ingresso_id=ingresso_id
+            file=pdf_buffer, filename=filename, ingresso_id=ingresso_id
         )
 
         # Atualizar URL no banco (campo certificado_url se existir)
@@ -108,10 +112,7 @@ async def gerar_pdf_certificado_upload(
         return None
 
 
-async def validar_checkin(
-    db: AsyncSession,
-    qr_code_hash: str
-) -> Optional[dict]:
+async def validar_checkin(db: AsyncSession, qr_code_hash: str) -> Optional[dict]:
     """
     Valida um ingresso via QR Code hash e marca como utilizado.
 
@@ -137,7 +138,7 @@ async def validar_checkin(
             "ingresso_id": ingresso.id,
             "evento_nome": ingresso.lote.evento.nome,
             "participante_nome": ingresso.participante.nome,
-            "certificado_url": certificado_url
+            "certificado_url": certificado_url,
         }
 
     except Exception:

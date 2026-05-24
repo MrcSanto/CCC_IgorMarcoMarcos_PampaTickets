@@ -35,8 +35,12 @@ class Lote(Base):
     preco: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     quantidade_total: Mapped[int] = mapped_column(Integer, nullable=False)
     quantidade_vendida: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    data_inicio_venda: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    data_fim_venda: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    data_inicio_venda: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    data_fim_venda: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     criado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

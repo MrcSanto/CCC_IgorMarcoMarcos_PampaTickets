@@ -164,6 +164,4 @@ async def _gerar_pdfs_ingressos(db: AsyncSession, pedido_id: str) -> None:
             await gerar_pdf_ingresso_upload(db, str(ingresso.id))
 
     except Exception:
-        logger.exception(
-            "Falha ao gerar PDFs dos ingressos do pedido {}", pedido_id
-        )
+        logger.exception("Falha ao gerar PDFs dos ingressos do pedido {}", pedido_id)

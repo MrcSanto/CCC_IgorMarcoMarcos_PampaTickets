@@ -24,7 +24,9 @@ class Evento(Base):
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     descricao: Mapped[str | None] = mapped_column(Text, nullable=True)
-    data_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    data_inicio: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     data_fim: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     local: Mapped[str] = mapped_column(String(500), nullable=False)
     status: Mapped[StatusEvento] = mapped_column(

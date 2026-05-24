@@ -1,4 +1,5 @@
 """Tipos compartilhados entre schemas Pydantic."""
+
 from datetime import datetime, timezone
 from typing import Annotated
 

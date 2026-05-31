@@ -101,3 +101,50 @@ export const cancelarEvento = async (id: string): Promise<Evento> => {
   const { data } = await api.patch<Evento>(`/eventos/${id}/cancelar`);
   return data;
 };
+
+export const baixarRelatorio = async (eventoId: string): Promise<void> => {
+  const response = await api.get(`/organizador/eventos/${eventoId}/relatorio`, {
+    responseType: "blob",
+  });
+  const url = URL.createObjectURL(
+    new Blob([response.data as BlobPart], { type: "application/pdf" }),
+  );
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `relatorio_${eventoId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+export type LoteResumo = {
+  nome: string;
+  tipo: string;
+  preco_unitario: number;
+  vendidos: number;
+  cortesias: number;
+  checkins: number;
+  receita: number;
+};
+
+export type RelatorioResumo = {
+  evento_nome: string;
+  receita_bruta: number;
+  desconto_cupons: number;
+  valor_reembolsado: number;
+  receita_liquida: number;
+  total_ingressos: number;
+  total_checkins: number;
+  taxa_comparecimento: number;
+  lotes: LoteResumo[];
+};
+
+export const obterResumoRelatorio = async (
+  eventoId: string,
+): Promise<RelatorioResumo> => {
+  const { data } = await api.get<RelatorioResumo>(
+    `/organizador/eventos/${eventoId}/relatorio/resumo`,
+  );
+  return data;
+};

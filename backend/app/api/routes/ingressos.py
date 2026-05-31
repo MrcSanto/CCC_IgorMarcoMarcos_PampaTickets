@@ -3,12 +3,36 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import ParticipanteUser
+from app.api.deps import OrganizadorUser, ParticipanteUser
 from app.db.session import get_db
-from app.repositories import ingresso_repo
-from app.schemas.ingresso import IngressoResponse
+from app.repositories import evento_repo, ingresso_repo
+from app.schemas.ingresso import IngressoOrganizadorResponse, IngressoResponse
 
 router = APIRouter(tags=["Ingressos"])
+
+
+@router.get(
+    "/organizador/eventos/{evento_id}/ingressos",
+    response_model=list[IngressoOrganizadorResponse],
+)
+async def listar_ingressos_do_evento(
+    evento_id: uuid.UUID,
+    organizador: OrganizadorUser,
+    db: AsyncSession = Depends(get_db),
+) -> list[IngressoOrganizadorResponse]:
+    evento = await evento_repo.get_by_id(db, evento_id)
+    if evento is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Evento não encontrado.",
+        )
+    if evento.organizador_id != organizador.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não é o organizador deste evento.",
+        )
+    ingressos = await ingresso_repo.list_by_evento(db, evento_id)
+    return [IngressoOrganizadorResponse.from_ingresso(i) for i in ingressos]
 
 
 @router.get("/ingressos/meus", response_model=list[IngressoResponse])

@@ -170,6 +170,9 @@ export const OrgEventoPage = () => {
           <Link to="/organizador/participantes" className={shared.btnSecondary}>
             Ver participantes →
           </Link>
+          <Link to="/organizador/financeiro" className={shared.btnSecondary}>
+            Relatório financeiro →
+          </Link>
         </div>
       </div>
     </>

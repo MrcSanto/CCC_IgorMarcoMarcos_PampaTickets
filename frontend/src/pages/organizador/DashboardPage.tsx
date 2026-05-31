@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  baixarRelatorio,
   gradientFor,
   listarEventosOrganizador,
+  obterResumoRelatorio,
   type Evento,
+  type RelatorioResumo,
 } from "../../api/eventos";
+import { MetricCard } from "../../components/MetricCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
 import {
@@ -14,7 +18,7 @@ import {
 } from "../../lib/active-event";
 import { firstName, useCurrentUser } from "../../lib/auth-store";
 import { extractErrorMessage } from "../../lib/errors";
-import { dateLong } from "../../lib/format";
+import { dateLong, money } from "../../lib/format";
 
 import styles from "./DashboardPage.module.css";
 
@@ -31,6 +35,9 @@ export const DashboardPage = () => {
   const [eventos, setEventos] = useState<Evento[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(getActiveEventId());
+  const [resumo, setResumo] = useState<RelatorioResumo | null>(null);
+  const [resumoError, setResumoError] = useState<string | null>(null);
+  const [baixando, setBaixando] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,10 +59,43 @@ export const DashboardPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!activeId) {
+      setResumo(null);
+      return;
+    }
+    let cancelled = false;
+    setResumo(null);
+    setResumoError(null);
+    obterResumoRelatorio(activeId)
+      .then((data) => {
+        if (!cancelled) setResumo(data);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setResumoError(extractErrorMessage(err, "Falha ao carregar métricas."));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId]);
+
   const selecionar = (id: string) => {
     setActiveEventId(id);
     setActiveId(id);
     navigate("/organizador/evento");
+  };
+
+  const baixarPdf = async () => {
+    if (!activeId) return;
+    setBaixando(true);
+    try {
+      await baixarRelatorio(activeId);
+    } catch (err) {
+      setResumoError(extractErrorMessage(err, "Falha ao baixar o relatório."));
+    } finally {
+      setBaixando(false);
+    }
   };
 
   const titulo = `${greeting()}, ${user ? firstName(user.nome) : "organizador"} 👋`;
@@ -139,12 +179,53 @@ export const DashboardPage = () => {
         <section className={styles.tableCard}>
           <div className={styles.tableHead}>
             <h3 className={styles.cardTitle}>Métricas e financeiro</h3>
+            {resumo && (
+              <button
+                type="button"
+                className={styles.inlineCta}
+                onClick={baixarPdf}
+                disabled={baixando}
+              >
+                {baixando ? "Gerando…" : "Baixar relatório PDF"}
+              </button>
+            )}
           </div>
-          <div className={styles.empty}>
-            UC14 (Relatório Financeiro) ainda não foi implementado no backend.
-            Quando disponível, métricas de receita, ticket médio e gráfico de
-            vendas aparecerão aqui.
-          </div>
+
+          {!activeId && (
+            <div className={styles.empty}>
+              Selecione um evento acima para ver as métricas financeiras.
+            </div>
+          )}
+          {activeId && resumoError && (
+            <div className={styles.empty}>{resumoError}</div>
+          )}
+          {activeId && !resumoError && resumo === null && (
+            <div className={styles.empty}>Carregando métricas…</div>
+          )}
+          {activeId && resumo && (
+            <div className={styles.metrics}>
+              <MetricCard
+                label="Receita líquida"
+                value={money(resumo.receita_liquida)}
+                tone="ok"
+                sub={`Bruta: ${money(resumo.receita_bruta)}`}
+              />
+              <MetricCard
+                label="Descontos (cupons)"
+                value={money(resumo.desconto_cupons)}
+                sub={`Reembolsos: ${money(resumo.valor_reembolsado)}`}
+              />
+              <MetricCard
+                label="Ingressos vendidos"
+                value={resumo.total_ingressos.toLocaleString("pt-BR")}
+                sub={`Check-ins: ${resumo.total_checkins.toLocaleString("pt-BR")}`}
+              />
+              <MetricCard
+                label="Comparecimento"
+                value={`${(resumo.taxa_comparecimento * 100).toFixed(0)}%`}
+              />
+            </div>
+          )}
         </section>
       </div>
     </>

@@ -109,3 +109,58 @@
   color: var(--pt-accent);
   border-color: var(--pt-accent);
 }
+
+/* Formulário de criação de lote */
+.form {
+  margin-top: 12px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--pt-text);
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-r-sm);
+  font-size: 14px;
+  background: var(--pt-bg-card);
+  color: var(--pt-text);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--pt-accent);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--pt-text);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pt-border);
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { cadastro, login, type Perfil } from "../../api/auth";
 import { extractErrorMessage } from "../../lib/errors";
@@ -8,7 +8,10 @@ import forms from "./forms.module.css";
 
 export const CadastroPage = () => {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState<Perfil>("PARTICIPANTE");
+  const location = useLocation();
+  const perfilInicial =
+    (location.state as { perfil?: Perfil } | null)?.perfil ?? "PARTICIPANTE";
+  const [perfil, setPerfil] = useState<Perfil>(perfilInicial);
   const [form, setForm] = useState({
     nome: "",
     email: "",

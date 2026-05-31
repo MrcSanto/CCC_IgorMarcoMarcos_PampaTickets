@@ -32,3 +32,25 @@ class IngressoResponse(BaseModel):
             evento_local=ing.lote.evento.local,
             lote_nome=ing.lote.nome,
         )
+
+
+class IngressoOrganizadorResponse(BaseModel):
+    id: uuid.UUID
+    status: StatusIngresso
+    emitido_em: datetime
+    lote_nome: str
+    participante_nome: str
+    participante_email: str
+
+    model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_ingresso(cls, ing: Ingresso) -> "IngressoOrganizadorResponse":
+        return cls(
+            id=ing.id,
+            status=ing.status,
+            emitido_em=ing.emitido_em,
+            lote_nome=ing.lote.nome,
+            participante_nome=ing.participante.nome,
+            participante_email=ing.participante.email,
+        )

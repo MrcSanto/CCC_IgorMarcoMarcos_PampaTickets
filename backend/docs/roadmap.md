@@ -13,13 +13,14 @@ Concluídos (em ordem cronológica):
 7. ✅ Reembolso (UC10)
 8. ✅ Cupons (UC05)
 9. ✅ Cortesias (UC06)
+10. ✅ Relatório Financeiro (UC14) — PDF (`StreamingResponse`, sem Supabase) + resumo JSON para o dashboard
+11. ✅ Listagem de ingressos por evento para o organizador (`GET /api/organizador/eventos/{id}/ingressos`)
 
 Pendentes:
 
-10. Relatório Financeiro PDF (UC14)
-11. Notificações WhatsApp (UC15)
-12. Reembolso em massa por cancelamento de evento (extensão do UC10)
-13. **Galeria de Fotos (UC08) — deixar por último**
+12. Notificações WhatsApp (UC15)
+13. Reembolso em massa por cancelamento de evento (extensão do UC10)
+14. **Galeria de Fotos (UC08) — deixar por último**
 
 ---
 
@@ -97,7 +98,7 @@ Todos os PDFs gerados são armazenados no Supabase Storage — nunca no servidor
 |---|---|---|
 | `ingressos` | PDFs de ingressos com QR Code | UC12 |
 | `certificados` | PDFs de certificados | UC13 |
-| `relatorios` | PDFs de relatórios financeiros | UC14 |
+| `relatorios` | ~~PDFs de relatórios financeiros~~ — **não usado**. UC14 serve o PDF direto pela API (ver abaixo) | UC14 |
 
 ### Nomenclatura dos arquivos
 
@@ -111,8 +112,8 @@ relatorios/{evento_id}/{filename}.pdf
 
 ### Regras de acesso
 - Ingressos e certificados: **URLs assinadas** com expiração (acesso temporário).
-- Relatórios: **bucket privado** — apenas organizador autenticado acessa.
-- URLs geradas são salvas nas respectivas tabelas no PostgreSQL.
+- Relatórios (UC14): **não passam pelo Supabase**. O PDF é gerado sob demanda e servido direto pela API via `StreamingResponse`, protegido por `OrganizadorUser` (ver `app/api/routes/relatorios.py`). Decisão de 30/05/2026: relatório é sensível e sempre fresco — servir pela API evita bucket privado + signed URLs que expiram/vazam.
+- URLs geradas (ingressos/certificados) são salvas nas respectivas tabelas no PostgreSQL.
 
 ---
 

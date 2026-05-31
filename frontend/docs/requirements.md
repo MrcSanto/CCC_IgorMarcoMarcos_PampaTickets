@@ -127,13 +127,15 @@ Mapa completo em [`src/App.tsx`](../src/App.tsx). Convenção: **rotas flat** es
 
 | Rota | Tela |
 |---|---|
-| `/organizador` | `DashboardPage` (visão geral) |
+| `/organizador` | `DashboardPage` (visão geral + métricas UC14) |
 | `/organizador/evento` | `OrgEventoPage` (detalhes do evento ativo) |
 | `/organizador/eventos/novo` | `CreateEventPage` (UC02) |
-| `/organizador/lotes` | `LotesPage` (UC03) |
+| `/organizador/lotes` | `LotesPage` (UC03 — lista + criação) |
+| `/organizador/cupons` | `CuponsPage` (UC05) |
+| `/organizador/cortesias` | `CortesiasPage` (UC06) |
 | `/organizador/checkin` | `CheckinPage` (UC04) |
-| `/organizador/participantes` | `AttendeesPage` |
-| `/organizador/financeiro` | `FinancePage` (preparado para UC14) |
+| `/organizador/participantes` | `AttendeesPage` (ingressos vendidos do evento) |
+| `/organizador/financeiro` | `FinancePage` (UC14 — baixa o PDF) |
 | `*` | Redirect para `/` |
 
 ### Notas

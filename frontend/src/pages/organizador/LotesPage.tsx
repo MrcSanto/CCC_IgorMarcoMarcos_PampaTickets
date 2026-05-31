@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 
 import {
   ativarLote,
+  criarLote,
   deletarLote,
   desativarLote,
   listarLotesOrganizador,
   type Lote,
+  type LoteCreate,
+  type TipoLote,
 } from "../../api/lotes";
 import { PageHeader } from "../../components/PageHeader";
 import { ProgressBar } from "../../components/ProgressBar";
@@ -22,6 +25,18 @@ export const LotesPage = () => {
   const { evento } = useActiveEvent();
   const [lotes, setLotes] = useState<Lote[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado do formulário
+  const [showForm, setShowForm] = useState(false);
+  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<TipoLote>("INTEIRA");
+  const [preco, setPreco] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [inicio, setInicio] = useState("");
+  const [fim, setFim] = useState("");
+  const [ativo, setAtivo] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!evento) return;
@@ -62,6 +77,38 @@ export const LotesPage = () => {
     }
   };
 
+  const criarNovoLote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!evento) return;
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      const payload: LoteCreate = {
+        nome,
+        tipo,
+        preco: parseFloat(preco),
+        quantidade_total: parseInt(quantidade, 10),
+        data_inicio_venda: new Date(inicio).toISOString(),
+        data_fim_venda: new Date(fim).toISOString(),
+        ativo,
+      };
+      const novo = await criarLote(evento.id, payload);
+      setLotes((prev) => (prev ? [...prev, novo] : [novo]));
+      setNome("");
+      setTipo("INTEIRA");
+      setPreco("");
+      setQuantidade("");
+      setInicio("");
+      setFim("");
+      setAtivo(true);
+      setShowForm(false);
+    } catch (err) {
+      setFormError(extractErrorMessage(err, "Falha ao criar lote."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (!evento) {
     return (
       <div className={shared.body}>
@@ -88,8 +135,14 @@ export const LotesPage = () => {
         breadcrumb={`${evento.nome} / Lotes & vendas`}
         title="Lotes & vendas"
         actions={
-          <button className={shared.btnPrimary} disabled>
-            + Criar lote
+          <button
+            className={showForm ? shared.btnSecondary : shared.btnPrimary}
+            onClick={() => {
+              setShowForm((v) => !v);
+              setFormError(null);
+            }}
+          >
+            {showForm ? "Cancelar" : "+ Criar lote"}
           </button>
         }
       />
@@ -101,6 +154,131 @@ export const LotesPage = () => {
             style={{ borderColor: "#c8102e", color: "#c8102e", marginBottom: 16 }}
           >
             ⚠ {error}
+          </div>
+        )}
+
+        {showForm && (
+          <div className={shared.cardPadded}>
+            <h3 className={shared.cardTitle}>Novo lote</h3>
+            <form className={styles.form} onSubmit={criarNovoLote}>
+              <Field label="Nome do lote *">
+                <input
+                  className={styles.input}
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="1º Lote — Pista"
+                  required
+                  minLength={2}
+                  maxLength={255}
+                />
+              </Field>
+
+              <div className={styles.row}>
+                <Field label="Tipo *">
+                  <select
+                    className={styles.input}
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value as TipoLote)}
+                    required
+                  >
+                    <option value="INTEIRA">Inteira</option>
+                    <option value="MEIA">Meia-entrada</option>
+                    <option value="PROMOCIONAL">Promocional</option>
+                  </select>
+                </Field>
+                <Field label="Preço (R$) *">
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={preco}
+                    onChange={(e) => setPreco(e.target.value)}
+                    placeholder="120.00"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </Field>
+              </div>
+
+              <div className={styles.row}>
+                <Field label="Quantidade total *">
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    placeholder="500"
+                    required
+                    min="1"
+                  />
+                </Field>
+                <Field label=" ">
+                  <label className={styles.checkRow}>
+                    <input
+                      type="checkbox"
+                      checked={ativo}
+                      onChange={(e) => setAtivo(e.target.checked)}
+                    />
+                    Ativar imediatamente para venda
+                  </label>
+                </Field>
+              </div>
+
+              <div className={styles.row}>
+                <Field label="Início das vendas *">
+                  <input
+                    type="datetime-local"
+                    className={styles.input}
+                    value={inicio}
+                    onChange={(e) => setInicio(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="Fim das vendas *">
+                  <input
+                    type="datetime-local"
+                    className={styles.input}
+                    value={fim}
+                    onChange={(e) => setFim(e.target.value)}
+                    required
+                  />
+                </Field>
+              </div>
+
+              {formError && (
+                <div
+                  style={{
+                    padding: "10px 12px",
+                    background: "rgba(200, 16, 46, 0.08)",
+                    color: "#c8102e",
+                    borderRadius: 6,
+                    fontSize: 13,
+                  }}
+                >
+                  ⚠ {formError}
+                </div>
+              )}
+
+              <div className={styles.formActions}>
+                <button
+                  type="button"
+                  className={shared.btnSecondary}
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormError(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className={shared.btnPrimary}
+                  disabled={submitting}
+                >
+                  {submitting ? "Criando…" : "Criar lote"}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -189,3 +367,16 @@ export const LotesPage = () => {
     </>
   );
 };
+
+const Field = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div className={styles.field}>
+    <div className={styles.fieldLabel}>{label}</div>
+    {children}
+  </div>
+);

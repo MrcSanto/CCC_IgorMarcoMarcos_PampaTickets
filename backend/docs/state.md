@@ -7,7 +7,7 @@
 
 ## Última atualização
 
-**Data:** 28/05/2026
+**Data:** 30/05/2026
 **Responsável:** Marco Antonio Santolin
 
 ---
@@ -26,25 +26,27 @@
 - [x] UC11 — Webhooks do Asaas
 - [x] UC12 — Geração de Ingresso PDF
 - [x] UC13 — Geração de Certificado PDF
-- [ ] UC14 — Relatório Financeiro PDF
+- [x] UC14 — Relatório Financeiro PDF (download em PDF + resumo em JSON)
 - [ ] UC15 — Notificações WhatsApp
 - [ ] UC08 — Galeria de Fotos (baixa prioridade)
+
+Endpoints extras (fora dos UCs originais):
+- [x] `GET /api/organizador/eventos/{id}/ingressos` — listagem de ingressos vendidos por evento (painel do organizador)
 
 ---
 
 ## Em progresso
 
-Nada em aberto. Próximo ciclo é UC14 (relatório financeiro PDF) ou UC15 (WhatsApp), conforme prioridade do dono do produto.
+Nada em aberto. Com UC14 entregue, o próximo ciclo é UC15 (WhatsApp) ou reembolso em massa por cancelamento de evento, conforme prioridade do dono do produto.
 
 ---
 
 ## Próximo passo
 
-1. **UC14 — Relatório Financeiro PDF**: reaproveitar `app/reports/` e `supabase_storage` (bucket `relatorios/` privado). Endpoint para o organizador emitir relatório por evento (vendas, reembolsos, ticket médio, ocupação por lote).
-2. **UC15 — Notificações WhatsApp**: criar `app/integrations/whatsapp/` (Meta Cloud API) e disparar em pagamento confirmado, check-in realizado, véspera do evento e cancelamento de evento.
-3. **Reembolso em massa pelo organizador**: quando o organizador cancela um evento (`PATCH /api/eventos/{id}/cancelar`), os pedidos pagos do evento não são reembolsados automaticamente. Fluxo simétrico ao UC10 atual, iterando sobre todos os pedidos PAGO.
-4. **Validar UC10 em sandbox**: rodar o roteiro de smoke (POST /api/pedidos/{id}/reembolso) e confirmar que webhook PAYMENT_REFUNDED cancela ingressos — pendência arrastada desde 11/05.
-5. **Suíte de testes**: ainda não existe. Vai virar dívida crítica antes do deploy.
+1. **UC15 — Notificações WhatsApp**: criar `app/integrations/whatsapp/` (Meta Cloud API) e disparar em pagamento confirmado, check-in realizado, véspera do evento e cancelamento de evento.
+2. **Reembolso em massa pelo organizador**: quando o organizador cancela um evento (`PATCH /api/eventos/{id}/cancelar`), os pedidos pagos do evento não são reembolsados automaticamente. Fluxo simétrico ao UC10 atual, iterando sobre todos os pedidos PAGO.
+3. **Validar UC10 em sandbox**: rodar o roteiro de smoke (POST /api/pedidos/{id}/reembolso) e confirmar que webhook PAYMENT_REFUNDED cancela ingressos — pendência arrastada desde 11/05.
+4. **Suíte de testes**: ainda não existe. Vai virar dívida crítica antes do deploy.
 
 ---
 
@@ -110,6 +112,8 @@ Nada em aberto. Próximo ciclo é UC14 (relatório financeiro PDF) ou UC15 (What
 - **Bug grave do UC04 resolvido — Checkin não era persistido** (24/05/2026 — Marco): `validar_checkin` apenas mudava `ingresso.status` para UTILIZADO mas nunca criava linha em `checkins`. Tabela órfã desde 03/05. Pior: endpoint era público — qualquer um com o `qr_code_hash` invalidava ingressos. Fix: novo [app/repositories/checkin_repo.py](../app/repositories/checkin_repo.py); `validar_checkin` agora exige `usuario: Usuario`, valida `ingresso.lote.evento.organizador_id == usuario.id` (403 se não), e persiste `Checkin` antes do `update_status`. Endpoint passou a exigir `OrganizadorUser`, recebe `qr_code_hash` em body JSON (via `CheckinRequest`) — não mais query param —, e responde `CheckinResponse` com `checkin_id` e `realizado_em`. Levanta HTTPException específicas: 404 (não existe), 403 (organizador errado), 409 (UTILIZADO/CANCELADO com mensagens distintas). Idempotência natural: 2ª chamada vira 409 porque ingresso já está UTILIZADO. Sem perfil STAFF ainda — só o organizador dono opera; fica como follow-up se for delegar para portaria.
 - **Bug do UC13 resolvido — Certificado não era persistido** (24/05/2026 — Marco): mesma natureza do bug acima — `gerar_pdf_certificado_upload` fazia upload no Supabase e retornava a URL mas nunca criava linha em `certificados`. Havia até comentário `# await ingresso_repo.update_certificado_url(...)` mostrando que a persistência foi adiada e esquecida. Fix: novo [app/repositories/certificado_repo.py](../app/repositories/certificado_repo.py) (`create` + `get_by_ingresso_id`). A função agora, após upload bem-sucedido, checa idempotência via `get_by_ingresso_id` e persiste `Certificado(ingresso_id, participante_id, pdf_url)`. Mantida dentro do `try/except logger.exception` — degradação silenciosa preservada se Supabase indisponível. Sem unique constraint em `certificados.ingresso_id` ainda — fica como follow-up se aparecer race condition real.
 - **Endpoint `GET /api/organizador/eventos/{evento_id}`** (28/05/2026 — Marco): novo endpoint em [app/api/routes/eventos.py](../app/api/routes/eventos.py) protegido por `OrganizadorUser`, atendido por `evento_service.obter_do_organizador` — contraparte privada de `obter_publico`. Diferença: `obter_publico` (`GET /api/eventos/{id}`) retorna 404 para RASCUNHO/CANCELADO; este retorna o evento em qualquer status desde que o requester seja o dono (valida via `_obter_proprio`). Necessário para o frontend organizador hidratar o evento ativo (incluindo RASCUNHO) ao migrar das rotas singulares para `/organizador/eventos/:id/...`.
+- **UC14 completo — Relatório Financeiro** (30/05/2026 — Marco): entregue em duas formas. **(1) PDF** via `GET /api/organizador/eventos/{id}/relatorio` — gera o PDF sob demanda e devolve com `StreamingResponse` (`application/pdf`, `Content-Disposition: attachment`). **Decisão arquitetural: não usa Supabase Storage.** Relatório é dado sensível, sempre fresco e gerado raramente — servir direto pela API (protegido por JWT/`OrganizadorUser`) evita bucket privado, signed URLs que expiram e URLs que vazam acesso. O bucket `relatorios/` configurado em `config.py` fica sem uso por ora. **(2) Resumo JSON** via `GET /api/organizador/eventos/{id}/relatorio/resumo` — mesmos números em JSON para alimentar os cards de métrica do dashboard do frontend. Novos arquivos: [app/reports/relatorio_pdf.py](../app/reports/relatorio_pdf.py) (dataclasses `DadosRelatorio`/`DadosLote` + `gerar_pdf_relatorio` com tabelas ReportLab), [app/service/relatorio_service.py](../app/service/relatorio_service.py), [app/schemas/relatorio.py](../app/schemas/relatorio.py) (`RelatorioResumoResponse.from_dados`), [app/api/routes/relatorios.py](../app/api/routes/relatorios.py) (registrado em `main.py`). O service tem `montar_dados` (5 queries de agregação: vendas por lote em pedidos PAGO/REEMBOLSADO, descontos de cupons, reembolsos processados, cortesias por lote, check-ins por lote — calcula receita bruta/líquida, total de ingressos, taxa de comparecimento) reaproveitado por `gerar_relatorio` (PDF) e pela rota de resumo. Validação de posse (404/403) vive dentro de `montar_dados`. O model `Relatorio` (tabela de auditoria) **continua sem uso** — relatório não é persistido, é sempre regenerado.
+- **Endpoint `GET /api/organizador/eventos/{id}/ingressos`** (30/05/2026 — Marco): novo endpoint em [app/api/routes/ingressos.py](../app/api/routes/ingressos.py) (`OrganizadorUser`, valida posse do evento → 404/403) que lista os ingressos vendidos de um evento para o painel do organizador. `ingresso_repo.list_by_evento` faz JOIN em `Lote` (`Lote.evento_id`) reaproveitando o `_eager_load_options` existente (participante + lote). Nova schema `IngressoOrganizadorResponse` (id, status, emitido_em, lote_nome, participante_nome, participante_email) em [app/schemas/ingresso.py](../app/schemas/ingresso.py). Desbloqueia a tela de Participantes do frontend, que era um placeholder por falta deste endpoint.
 
 - **Testes**: ausência de suíte de testes para o fluxo de autenticação (UC01) e demais UCs.
 - **Refresh token**: definir se será implementado e qual estratégia (rotate/revoke).
@@ -119,7 +123,7 @@ Nada em aberto. Próximo ciclo é UC14 (relatório financeiro PDF) ou UC15 (What
 - ~~**Logs estruturados**~~ resolvido: loguru + `LoggingMiddleware` loga cada request. ~~Tratamento global de exceções~~ também resolvido em 11/05/2026 via `@app.exception_handler(Exception)` em `main.py`.
 - **CORS em produção**: middleware habilitado, mas as origens precisam ser revistas antes de qualquer deploy.
 - **Seed de dados** para desenvolvimento: descartada em 24/05/2026 — usuários de teste são criados manualmente via `POST /api/auth/cadastro`.
-- **Modelos sem rotas restantes**: `Relatorio` (UC14), `FotoEvento`/`CompraFoto` (UC08) — modelos ORM existem mas faltam repositório/service/rotas. ~~`Cupom` (UC05)~~ e ~~`Cortesia` (UC06)~~ resolvidos em 24/05/2026.
+- **Modelos sem rotas restantes**: `FotoEvento`/`CompraFoto` (UC08) — modelos ORM existem mas faltam repositório/service/rotas. ~~`Cupom` (UC05)~~ e ~~`Cortesia` (UC06)~~ resolvidos em 24/05/2026. ~~`Relatorio` (UC14)~~ — UC14 entregue em 30/05/2026 **sem** persistir o model `Relatorio` (relatório é regenerado sob demanda, não salvo); a tabela existe mas segue sem uso, candidata a virar log de auditoria ou ser removida.
 - **UC15 não iniciado**: integração com Meta Cloud API (WhatsApp) precisa ser criada do zero em `app/integrations/whatsapp/`.
 - ~~**`PAYMENT_REFUNDED` não cancela ingressos**~~ resolvido no UC10: agora cancela todos os ingressos do pedido reembolsado.
 - ~~**`gerar_pdf_ingresso_upload` engole exceções silenciosamente**~~ resolvido em 11/05/2026: aplicado em todos os call sites (`gerar_pdf_ingresso_upload`, `gerar_pdf_certificado_upload`, `validar_checkin`, `_gerar_pdfs_ingressos`) via `logger.exception`.

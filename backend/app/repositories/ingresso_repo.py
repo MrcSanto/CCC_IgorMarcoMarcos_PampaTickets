@@ -91,3 +91,19 @@ async def list_by_participante(
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def list_by_evento(db: AsyncSession, evento_id: uuid.UUID) -> list[Ingresso]:
+    """
+    Lista todos os ingressos de um evento (via JOIN em Lote), com participante e
+    lote carregados. Usado pelo painel do organizador.
+    """
+    stmt = (
+        select(Ingresso)
+        .options(*_eager_load_options())
+        .join(Lote, Ingresso.lote_id == Lote.id)
+        .where(Lote.evento_id == evento_id)
+        .order_by(Ingresso.emitido_em.desc())
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())

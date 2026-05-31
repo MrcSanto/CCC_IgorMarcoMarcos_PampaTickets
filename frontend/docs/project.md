@@ -39,10 +39,12 @@ frontend/
 │   ├── api/                               # Camada de comunicação com o backend (FastAPI)
 │   │   ├── client.ts                      # axios singleton + interceptor de JWT (localStorage)
 │   │   ├── auth.ts                        # login, cadastro, logout, tipos Usuario/Perfil
-│   │   ├── eventos.ts                     # CRUD de eventos + gradientFor(id) determinístico
+│   │   ├── eventos.ts                     # CRUD de eventos + gradientFor(id) + UC14 (baixarRelatorio PDF + obterResumoRelatorio JSON)
 │   │   ├── lotes.ts                       # listar/criar/editar/ativar/deletar lotes (UC03)
+│   │   ├── cupons.ts                      # CRUD de cupons do organizador (UC05)
+│   │   ├── cortesias.ts                   # emitir/listar/cancelar cortesias (UC06)
 │   │   ├── pedidos.ts                     # criar pedido, listar/cancelar/reembolsar (UC07/UC09/UC10)
-│   │   ├── ingressos.ts                   # GET /api/ingressos/meus, /api/ingressos/{id} (UC07/UC12)
+│   │   ├── ingressos.ts                   # /api/ingressos/meus, /{id} + listarIngressosDoEvento (organizador)
 │   │   └── checkin.ts                     # POST /api/checkin (UC04 — organizador)
 │   ├── components/                        # Componentes reutilizáveis entre páginas
 │   │   ├── DateBlock.tsx                  # Bloco de data destacado (dia/mês/semana)
@@ -74,13 +76,16 @@ frontend/
 │   │   │   ├── TicketsPage.tsx            # /eventos/:id/ingressos — confirmação pós-compra
 │   │   │   └── MyTicketsPage.tsx          # /meus-ingressos (UC07 — /api/ingressos/meus)
 │   │   ├── organizador/                   # Telas sob /organizador
-│   │   │   ├── DashboardPage.tsx          # /organizador — visão geral
+│   │   │   ├── DashboardPage.tsx          # /organizador — visão geral + métricas UC14 (/relatorio/resumo)
 │   │   │   ├── OrgEventoPage.tsx          # /organizador/evento — detalhe do evento ativo
-│   │   │   ├── LotesPage.tsx              # /organizador/lotes (UC03)
+│   │   │   ├── LotesPage.tsx              # /organizador/lotes (UC03 — lista + criação inline)
+│   │   │   ├── CuponsPage.tsx             # /organizador/cupons (UC05)
+│   │   │   ├── CortesiasPage.tsx          # /organizador/cortesias (UC06)
 │   │   │   ├── CheckinPage.tsx            # /organizador/checkin (UC04)
 │   │   │   ├── CreateEventPage.tsx        # /organizador/eventos/novo (UC02)
-│   │   │   ├── FinancePage.tsx            # /organizador/financeiro (preparado para UC14)
-│   │   │   ├── AttendeesPage.tsx          # /organizador/participantes
+│   │   │   ├── FinancePage.tsx            # /organizador/financeiro (UC14 — baixa o PDF)
+│   │   │   ├── AttendeesPage.tsx          # /organizador/participantes (GET /organizador/eventos/:id/ingressos)
+│   │   │   ├── orgForms.module.css        # Estilos compartilhados de form + tabela (Cupons/Cortesias/Attendees)
 │   │   │   └── shared.module.css          # Estilos compartilhados das telas /organizador
 │   │   ├── LandingPage.tsx                # Página pública inicial (/)
 │   │   └── LandingPage.module.css

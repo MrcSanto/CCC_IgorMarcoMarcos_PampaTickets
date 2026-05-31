@@ -31,20 +31,20 @@ export const LandingPage = () => (
       </p>
 
       <div className={styles.actions}>
-        <Link to="/inicio" className={styles.primary}>
+        <Link
+          to="/cadastro"
+          state={{ perfil: "PARTICIPANTE" }}
+          className={styles.primary}
+        >
           Sou participante →
         </Link>
-        <Link to="/organizador" className={styles.secondary}>
+        <Link
+          to="/cadastro"
+          state={{ perfil: "ORGANIZADOR" }}
+          className={styles.secondary}
+        >
           Sou organizador →
         </Link>
-      </div>
-
-      <div className={styles.demo}>
-        <div className={styles.demoLine}>
-          <span className={styles.demoDot} /> Demo navegável — sem login,
-          consumindo dados de exemplo. As rotas com API caem para mocks quando o
-          backend não está rodando.
-        </div>
       </div>
     </section>
 

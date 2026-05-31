@@ -1,0 +1,98 @@
+/* Estilos compartilhados de formulário e tabela do organizador.
+   Reaproveitado por CuponsPage, CortesiasPage e AttendeesPage. */
+
+.form {
+  margin-top: 12px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--pt-text);
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--pt-border);
+  border-radius: var(--pt-r-sm);
+  font-size: 14px;
+  background: var(--pt-bg-card);
+  color: var(--pt-text);
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--pt-accent);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--pt-text);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pt-border);
+}
+
+.formError {
+  padding: 10px 12px;
+  background: rgba(200, 16, 46, 0.08);
+  color: #c8102e;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.numeric {
+  text-align: right;
+}
+
+.bold {
+  font-weight: 600;
+}
+
+.tipo {
+  padding: 2px 8px;
+  border-radius: var(--pt-r-xs);
+  background: var(--pt-accent-soft);
+  color: var(--pt-accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.dim {
+  color: var(--pt-text-dim);
+  font-size: 12px;
+}
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--pt-org-text-dim, var(--pt-text-dim));
+}
+
+.searchInput {
+  max-width: 320px;
+  margin-bottom: 16px;
+}

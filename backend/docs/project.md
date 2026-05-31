@@ -30,7 +30,7 @@ Este repositório contém o **backend principal**, responsável por toda a lógi
 
 ## Estrutura de Pastas
 
-> Este documento lista **apenas o que existe hoje no código**. UCs ainda não implementados (UC08/14/15) não estão na árvore — veja `roadmap.md` e `state.md` para o que está pendente.
+> Este documento lista **apenas o que existe hoje no código**. UCs ainda não implementados (UC08/15) não estão na árvore — veja `roadmap.md` e `state.md` para o que está pendente.
 
 ```
 backend/
@@ -46,9 +46,10 @@ backend/
 │   │       ├── cortesias.py              # UC06 — emitir/listar/obter/cancelar cortesia
 │   │       ├── cupons.py                 # UC05 — CRUD + validar (preview do desconto)
 │   │       ├── eventos.py                # UC02 — CRUD + publicar/encerrar/cancelar
-│   │       ├── ingressos.py              # consulta de ingressos do participante (/meus, /{id})
+│   │       ├── ingressos.py              # ingressos do participante (/meus, /{id}) + listagem por evento do organizador
 │   │       ├── lotes.py                  # UC03 — CRUD + ativar/desativar
 │   │       ├── pedidos.py                # UC07 — criar, listar, detalhe, cancelar, reembolso
+│   │       ├── relatorios.py             # UC14 — relatório financeiro: PDF (StreamingResponse) + resumo JSON
 │   │       └── webhooks.py               # UC11 — receptor do Asaas
 │   ├── core/
 │   │   ├── config.py                     # Settings via pydantic-settings
@@ -77,7 +78,7 @@ backend/
 │   │   ├── cortesia.py                   # UC06 — relationships beneficiado/lote/ingresso
 │   │   ├── checkin.py
 │   │   ├── certificado.py
-│   │   ├── relatorio.py                  # modelo só (UC14 sem rotas)
+│   │   ├── relatorio.py                  # modelo só — UC14 NÃO persiste (relatório é regenerado sob demanda)
 │   │   └── foto.py                       # FotoEvento + CompraFoto (UC08 sem rotas)
 │   ├── repositories/
 │   │   ├── usuario_repo.py
@@ -92,7 +93,8 @@ backend/
 │   │   ├── checkin_repo.py               # UC04 — persiste linha em checkins
 │   │   └── certificado_repo.py           # UC13 — persiste linha em certificados
 │   ├── reports/
-│   │   └── ingresso_pdf.py               # gerar_pdf_ingresso (UC12) + gerar_pdf_certificado (UC13)
+│   │   ├── ingresso_pdf.py               # gerar_pdf_ingresso (UC12) + gerar_pdf_certificado (UC13)
+│   │   └── relatorio_pdf.py              # UC14 — DadosRelatorio/DadosLote + gerar_pdf_relatorio (tabelas ReportLab)
 │   ├── schemas/
 │   │   ├── _types.py                     # DatetimeUTC (assume UTC quando vem naive)
 │   │   ├── usuario.py
@@ -100,10 +102,11 @@ backend/
 │   │   ├── lote.py
 │   │   ├── pedido.py                     # PedidoCreate aceita cupom_codigo opcional
 │   │   ├── reembolso.py                  # UC10
-│   │   ├── ingresso.py
+│   │   ├── ingresso.py                   # IngressoResponse + IngressoOrganizadorResponse (listagem por evento)
 │   │   ├── checkin.py                    # CheckinRequest (body) + CheckinResponse
 │   │   ├── cupom.py                      # Create/Update/Response + ValidarRequest/Response
-│   │   └── cortesia.py                   # Create + Response (desnormaliza email/nome/lote)
+│   │   ├── cortesia.py                   # Create + Response (desnormaliza email/nome/lote)
+│   │   └── relatorio.py                  # UC14 — RelatorioResumoResponse.from_dados (resumo JSON do dashboard)
 │   ├── service/
 │   │   ├── auth_service.py               # JWT + bcrypt
 │   │   ├── evento_service.py
@@ -113,7 +116,8 @@ backend/
 │   │   ├── cancelamento_service.py       # aplicar_cancelamento (manual + OVERDUE) — devolve cupom também
 │   │   ├── ingresso_service.py           # criar_ingressos_para_pedido + PDFs + validar_checkin (auth)
 │   │   ├── cupom_service.py              # UC05 — CRUD + validar_e_calcular_desconto
-│   │   └── cortesia_service.py           # UC06 — emitir/listar/obter/cancelar (atômico)
+│   │   ├── cortesia_service.py           # UC06 — emitir/listar/obter/cancelar (atômico)
+│   │   └── relatorio_service.py          # UC14 — montar_dados (5 queries) + gerar_relatorio (PDF)
 │   └── main.py
 ├── docs/                                 # project.md, requirements.md, roadmap.md, state.md
 ├── Dockerfile

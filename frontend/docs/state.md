@@ -7,12 +7,22 @@
 
 ## Última atualização
 
-**Data:** 26/05/2026
+**Data:** 30/05/2026
 **Responsável:** Marco Antonio Santolin
 
-> Mudanças recentes nesta sessão:
+> Mudanças recentes nesta sessão (30/05/2026) — **painel do organizador fechou paridade com o backend**:
+> 1. **Criar lote (UC03)**: formulário inline expansível em `LotesPage` (botão "+ Criar lote" deixou de ser placeholder). Usa `criarLote`.
+> 2. **Cupons (UC05)**: novo `api/cupons.ts` + `CuponsPage` (criar/listar/ativar-desativar/excluir).
+> 3. **Cortesias (UC06)**: novo `api/cortesias.ts` + `CortesiasPage` (emitir por e-mail/listar/cancelar; select de lotes).
+> 4. **Participantes**: `AttendeesPage` deixou de ser placeholder — consome o novo `GET /api/organizador/eventos/:id/ingressos` (`listarIngressosDoEvento`) com busca client-side.
+> 5. **UC14 Relatório Financeiro**: `FinancePage` baixa o PDF (`baixarRelatorio`) e o `DashboardPage` mostra métricas reais (`obterResumoRelatorio` → `MetricCard`: receita líquida/bruta, descontos/reembolsos, ingressos vendidos/check-ins, comparecimento). A mensagem "UC14 não implementado" saiu.
+> 6. **Landing**: removido o aviso de "demo/dados de exemplo/mocks". Os botões "Sou participante"/"Sou organizador" agora vão para `/cadastro` passando o perfil via `state` (o `CadastroPage` pré-seleciona o perfil).
+> 7. **OrganizerLayout**: "Cupons" e "Cortesias" saíram de `TOP_NAV_DISABLED` e entraram no `EVENT_NAV` (navegáveis). O label fixo "Festival de Inverno" virou o nome do evento ativo (`useActiveEvent`).
+> 8. **CSS**: novo `pages/organizador/orgForms.module.css` compartilhado (form + tabela) por Cupons/Cortesias/Attendees.
+>
+> Mudanças da sessão anterior (26/05/2026):
 > 1. **Rotas flat** estilo Ticketmaster: `/app/*` deixou de existir (vira `/inicio`, `/eventos`, `/meus-ingressos`); `/org/*` virou `/organizador/*`. Pastas `src/pages/participant/` e `src/pages/organizer/` renomeadas para `participante/` e `organizador/`. Detalhes em [`requirements.md`](requirements.md#rotas).
-> 2. **Remoção dos mocks** (`src/data/sample.ts` deletado). Todas as 13 pages e o `EventCard` consomem a API real. Novos clientes em `api/`: `lotes.ts`, `pedidos.ts`, `ingressos.ts`, `checkin.ts`. Novo helper `lib/active-event.ts` que persiste o id do evento ativo do organizador em localStorage. Campos sem suporte no backend (categoria/urgente/destaque/vendidos/precoMin/imagem) saíram da UI; imagem virou gradient determinístico por id. Dashboard, Financeiro e Participantes do organizador viraram placeholders explícitos enquanto UC14 e endpoints faltantes não chegam.
+> 2. **Remoção dos mocks** (`src/data/sample.ts` deletado). Todas as pages e o `EventCard` consomem a API real. Clientes em `api/`: `lotes.ts`, `pedidos.ts`, `ingressos.ts`, `checkin.ts`. Helper `lib/active-event.ts` que persiste o id do evento ativo do organizador em localStorage.
 
 ---
 
@@ -45,15 +55,18 @@
 - [x] `MyTicketsPage` consome `GET /api/ingressos/meus`, separa em "Próximos" (ATIVO + futuro) e "Histórico" (UTILIZADO/CANCELADO/passados); link de PDF quando `pdf_url` disponível.
 - [x] `EventCard`, `DateBlock`, `StatusPill`, `ProgressBar`, `MetricCard`, `PageHeader`, `Logo` como componentes reutilizáveis.
 
-### Organizador (UC02/UC03/UC04)
+### Organizador (UC02/UC03/UC04/UC05/UC06/UC14)
 
 - [x] `lib/active-event.ts` — `useActiveEvent()` lê o id de evento ativo de `localStorage`; pages do organizador usam isso como seletor mínimo enquanto as rotas são singulares.
-- [x] `DashboardPage` lista os eventos do organizador (`GET /api/organizador/eventos`) em cards; clicar define o evento ativo e navega para `OrgEventoPage`. Sem métricas — apresenta placeholder explícito para UC14.
-- [x] `OrgEventoPage` exibe o evento ativo + ações de transição (Publicar / Encerrar / Cancelar) conforme `status`. Botões só aparecem se a transição for válida.
-- [x] `LotesPage` consome `GET /api/organizador/eventos/:id/lotes` com Ativar/Desativar/Excluir. Botão "+ Criar lote" desabilitado por enquanto (formulário ainda não escrito).
+- [x] `DashboardPage` lista os eventos do organizador (`GET /api/organizador/eventos`) em cards; clicar define o evento ativo e navega para `OrgEventoPage`. **Métricas reais (UC14)**: ao ter evento ativo, busca `obterResumoRelatorio` e mostra `MetricCard`s (receita líquida/bruta, descontos/reembolsos, ingressos vendidos/check-ins, % de comparecimento) + botão "Baixar relatório PDF".
+- [x] `OrgEventoPage` exibe o evento ativo + ações de transição (Publicar / Encerrar / Cancelar) conforme `status`. Botões só aparecem se a transição for válida. Tem atalho para "Relatório financeiro".
+- [x] `LotesPage` consome `GET /api/organizador/eventos/:id/lotes` com Ativar/Desativar/Excluir + **criação inline** ("+ Criar lote" via `criarLote`).
+- [x] `CuponsPage` (UC05) — `api/cupons.ts`: criar (form inline), listar, ativar/desativar (via `editarCupom({ativo})`), excluir. Mostra `%` ou `R$` conforme `tipo_desconto`.
+- [x] `CortesiasPage` (UC06) — `api/cortesias.ts`: emitir cortesia (select de lote + e-mail do beneficiado + motivo), listar, cancelar. Erro claro quando o e-mail não é de usuário cadastrado.
+- [x] `AttendeesPage` — consome `GET /api/organizador/eventos/:id/ingressos` (`listarIngressosDoEvento`): tabela com participante (nome/email), lote, status (`StatusPill`) e data; busca client-side por nome/email.
 - [x] `CreateEventPage` virou formulário único com os 5 campos do `EventoCreate` (nome, descrição, data_inicio, data_fim, local). Criação retorna o `Evento`, define-o como ativo e navega para `OrgEventoPage`.
 - [x] `CheckinPage` chama `POST /api/checkin` com `qr_code_hash` colado manualmente; mantém um stream local dos últimos 20 ✓/✗ com mensagem de erro do backend.
-- [x] `FinancePage` e `AttendeesPage` são placeholders explícitos — backend ainda não tem UC14 nem endpoint de listagem de ingressos por evento para o organizador.
+- [x] `FinancePage` (UC14) — baixa o relatório financeiro do evento ativo em PDF via `baixarRelatorio` (blob → download).
 
 ### Utilitários
 
@@ -64,17 +77,17 @@
 
 ## Em progresso
 
-Nada em aberto. Próximo ciclo: criar lote no organizador (formulário em `LotesPage`), aplicar cupom no checkout (UC05) e botão de reembolso em `MyTicketsPage` (UC10).
+Nada em aberto. O painel do organizador agora cobre todos os endpoints do backend (eventos, lotes, cupons, cortesias, check-in, participantes, relatório financeiro). Foco do próximo ciclo volta ao **lado do participante**: cupom no checkout (UC05), reembolso (UC10) e polling do pagamento PIX.
 
 ---
 
 ## Próximo passo
 
-1. **Criar lote no organizador**: `LotesPage` já lista/ativa/exclui via API; falta o formulário de **criar** (chama `POST /api/eventos/:id/lotes` — `criarLote` já existe em `api/lotes.ts`).
-2. **Polling do pedido em PIX**: hoje `CheckoutPage` mostra o QR mas o usuário precisa entrar em `MyTicketsPage` pra ver se foi pago. Adicionar polling de `GET /api/pedidos/{id}` a cada ~5s enquanto status === PENDENTE.
-3. **Cupons no checkout (UC05)**: input de código em `CheckoutPage`, preview via `POST /api/eventos/{id}/cupons/validar`, envio do `cupom_codigo` no `POST /api/pedidos`. Cliente `api/cupons.ts` ainda não existe.
-4. **Reembolso (UC10)**: botão "Solicitar reembolso" em `MyTicketsPage` chamando `reembolsarPedido` (já existe em `api/pedidos.ts`).
-5. **Leitor de QR de verdade** em `CheckinPage`: hoje aceita o hash colado manualmente. Adicionar `getUserMedia` + lib tipo `@zxing/browser`.
+1. **Cupom no checkout (UC05 — participante)**: input de código em `CheckoutPage`, preview via `POST /api/eventos/{id}/cupons/validar`, envio do `cupom_codigo` no `POST /api/pedidos`. Obs: o cliente `api/cupons.ts` já existe (criado para o painel do organizador) — falta a função de validar/preview e o uso no checkout.
+2. **Reembolso (UC10)**: botão "Solicitar reembolso" em `MyTicketsPage` chamando `reembolsarPedido` (já existe em `api/pedidos.ts`).
+3. **Polling do pedido em PIX**: hoje `CheckoutPage` mostra o QR mas o usuário precisa entrar em `MyTicketsPage` pra ver se foi pago. Adicionar polling de `GET /api/pedidos/{id}` a cada ~5s enquanto status === PENDENTE.
+4. **Leitor de QR de verdade** em `CheckinPage`: hoje aceita o hash colado manualmente. Adicionar `getUserMedia` + lib tipo `@zxing/browser`.
+5. **Editar evento (UC02)**: `PUT /api/eventos/:id` em `OrgEventoPage`.
 6. **Guards de rota**: `RequireAuth` em `/inicio`, `/meus-ingressos`, `/eventos/:id/checkout`, `/eventos/:id/ingressos`, `/organizador/*`. `RequirePerfil` para impedir participante em `/organizador` e vice-versa.
 
 ---
@@ -98,7 +111,7 @@ Nada em aberto. Próximo ciclo: criar lote no organizador (formulário em `Lotes
 ## Pendências conhecidas
 
 - **Guards de rota ausentes**: hoje qualquer um navega para `/inicio`, `/meus-ingressos` ou `/organizador/*` sem auth. Backend rejeita as chamadas, mas a UX é ruim. Prioridade alta junto com o checkout.
-- **Rotas singulares do organizador**: `/organizador/evento`, `/organizador/lotes`, `/organizador/checkin` assumem um evento ativo. Quando o front passar a suportar múltiplos eventos, migrar para `/organizador/eventos/:id/...` (lotes/participantes nested). O `OrganizerLayout` tem hard-coded "Festival de Inverno" no `EVENT_NAV` — sai junto com a refator.
+- **Rotas singulares do organizador**: `/organizador/evento`, `/organizador/lotes`, `/organizador/cupons`, `/organizador/cortesias`, `/organizador/checkin`, `/organizador/participantes` assumem um evento ativo (`useActiveEvent`). Quando o front passar a suportar múltiplos eventos, migrar para `/organizador/eventos/:id/...` (nested).
 - **Sem refresh token**: quando o JWT expira (60min), o usuário vê erros 401 silenciosos. Solução depende do backend implementar refresh primeiro.
 - **Sem testes**: nenhum Vitest/Testing Library configurado. Dívida crítica antes do deploy.
 - **Estados de loading/erro inconsistentes**: cada página trata do seu jeito. Falta um padrão (skeleton + retry).
@@ -107,6 +120,8 @@ Nada em aberto. Próximo ciclo: criar lote no organizador (formulário em `Lotes
 - **Validação de força de senha no cadastro**: hoje só checa o que o backend devolver. Validar no front antes de enviar.
 - **Polling vs WebSocket** para status do pagamento: a primeira versão do checkout vai usar polling (mais simples). Se virar gargalo, migrar para WS.
 - **Backend sem categoria/imagem nos eventos**: chips de categoria foram removidos da UI. Imagens são gradients determinísticos por id. Se um dia o `Evento` ganhar `categoria` e `imagem_url`, repor.
-- **`OrganizerLayout` ainda com "Festival de Inverno" hard-coded**: o `EVENT_NAV` mostra o título fixo. Quando `useActiveEvent()` for usado no layout, troca pelo nome real do evento ativo.
-- **`AttendeesPage` e `FinancePage`** são placeholders enquanto não houver `GET /api/organizador/eventos/:id/ingressos` e UC14.
-- **Cliente de cupons (`api/cupons.ts`)** ainda não existe — checkout não aplica desconto.
+- ~~**`OrganizerLayout` com "Festival de Inverno" hard-coded**~~ resolvido em 30/05/2026: `EVENT_NAV` mostra `evento?.nome` via `useActiveEvent()` (fallback "Evento").
+- ~~**`AttendeesPage` e `FinancePage` placeholders**~~ resolvidos em 30/05/2026: `AttendeesPage` consome `GET /api/organizador/eventos/:id/ingressos`; `FinancePage` baixa o PDF do UC14 e o `DashboardPage` mostra as métricas via `/relatorio/resumo`.
+- ~~**Cliente de cupons (`api/cupons.ts`)**~~ criado em 30/05/2026 para o painel do organizador (criar/listar/editar/excluir). **Falta ainda** a função de validar/preview e o uso no checkout do participante (UC05).
+- **Cupom no checkout do participante**: `CheckoutPage` ainda não tem input de cupom nem preview de desconto.
+- **Reembolso (UC10) sem botão**: `reembolsarPedido` existe em `api/pedidos.ts`, falta o botão em `MyTicketsPage`.

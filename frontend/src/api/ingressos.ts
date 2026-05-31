@@ -17,8 +17,27 @@ export type Ingresso = {
   lote_nome: string;
 };
 
+// Visão do organizador: ingressos vendidos de um evento, com dados do participante.
+export type IngressoOrganizador = {
+  id: string;
+  status: StatusIngresso;
+  emitido_em: string;
+  lote_nome: string;
+  participante_nome: string;
+  participante_email: string;
+};
+
 export const listarMeusIngressos = async (): Promise<Ingresso[]> => {
   const { data } = await api.get<Ingresso[]>("/ingressos/meus");
+  return data;
+};
+
+export const listarIngressosDoEvento = async (
+  eventoId: string,
+): Promise<IngressoOrganizador[]> => {
+  const { data } = await api.get<IngressoOrganizador[]>(
+    `/organizador/eventos/${eventoId}/ingressos`,
+  );
   return data;
 };
 

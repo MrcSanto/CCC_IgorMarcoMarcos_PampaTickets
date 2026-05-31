@@ -21,6 +21,8 @@ import { CheckinPage } from "./pages/organizador/CheckinPage";
 import { CreateEventPage } from "./pages/organizador/CreateEventPage";
 import { FinancePage } from "./pages/organizador/FinancePage";
 import { AttendeesPage } from "./pages/organizador/AttendeesPage";
+import { CuponsPage } from "./pages/organizador/CuponsPage";
+import { CortesiasPage } from "./pages/organizador/CortesiasPage";
 
 export const App = () => (
   <Routes>
@@ -45,6 +47,8 @@ export const App = () => (
       <Route path="evento" element={<OrgEventoPage />} />
       <Route path="eventos/novo" element={<CreateEventPage />} />
       <Route path="lotes" element={<LotesPage />} />
+      <Route path="cupons" element={<CuponsPage />} />
+      <Route path="cortesias" element={<CortesiasPage />} />
       <Route path="checkin" element={<CheckinPage />} />
       <Route path="participantes" element={<AttendeesPage />} />
       <Route path="financeiro" element={<FinancePage />} />

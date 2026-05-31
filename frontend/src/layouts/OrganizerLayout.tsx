@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { logout } from "../api/auth";
+import { useActiveEvent } from "../lib/active-event";
 import { initials, useCurrentUser } from "../lib/auth-store";
 import styles from "./OrganizerLayout.module.css";
 
@@ -11,20 +12,21 @@ const TOP_NAV = [
 
 const TOP_NAV_DISABLED = [
   { label: "Eventos", icon: "☰" },
-  { label: "Cupons", icon: "◇" },
-  { label: "Cortesias", icon: "✦" },
   { label: "Relatórios", icon: "📊" },
 ];
 
 const EVENT_NAV = [
   { to: "/organizador/evento", label: "Detalhes do evento", icon: "★" },
   { to: "/organizador/lotes", label: "Lotes & vendas", icon: "◐" },
+  { to: "/organizador/cupons", label: "Cupons", icon: "◇" },
+  { to: "/organizador/cortesias", label: "Cortesias", icon: "✦" },
   { to: "/organizador/checkin", label: "Check-in ao vivo", icon: "✓" },
   { to: "/organizador/participantes", label: "Participantes", icon: "👥" },
 ];
 
 export const OrganizerLayout = () => {
   const user = useCurrentUser();
+  const { evento } = useActiveEvent();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -67,7 +69,7 @@ export const OrganizerLayout = () => {
       </div>
 
       <div className={styles.section}>
-        <div className={styles.sectionLabel}>Festival de Inverno</div>
+        <div className={styles.sectionLabel}>{evento?.nome ?? "Evento"}</div>
         {EVENT_NAV.map((n) => (
           <NavLink
             key={n.to}

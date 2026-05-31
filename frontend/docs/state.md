@@ -10,7 +10,13 @@
 **Data:** 30/05/2026
 **Responsável:** Marco Antonio Santolin
 
-> Mudanças recentes nesta sessão (30/05/2026) — **painel do organizador fechou paridade com o backend**:
+> Ajustes de UI (30/05/2026) — **polimento de marca e limpeza de placeholders**:
+> 1. **Logo por imagem**: `Logo.tsx` deixou de desenhar o quadradinho "P" via CSS e passou a usar a imagem real da marca (`public/logo.png`) como ícone, mantendo o wordmark "pampa*tickets*" ao lado (`size` controla a altura do `<img>`). Reflete em landing, auth (login/cadastro) e topo do participante. CSS: `.mark` virou `.img`; `.wordmark` mantido.
+> 2. **Login limpo**: removido o texto de teste "Sem backend rodando? Use /inicio ou /organizador para ver o demo." da `LoginPage`.
+> 3. **City chip removido**: o botão fixo "📍 Porto Alegre ▾" saiu do `ParticipantLayout` (e a regra `.cityChip` do CSS) — não tinha função.
+> 4. **favicon.svg** atualizado para a nova marca.
+>
+> Mudanças anteriores nesta sessão (30/05/2026) — **painel do organizador fechou paridade com o backend**:
 > 1. **Criar lote (UC03)**: formulário inline expansível em `LotesPage` (botão "+ Criar lote" deixou de ser placeholder). Usa `criarLote`.
 > 2. **Cupons (UC05)**: novo `api/cupons.ts` + `CuponsPage` (criar/listar/ativar-desativar/excluir).
 > 3. **Cortesias (UC06)**: novo `api/cortesias.ts` + `CortesiasPage` (emitir por e-mail/listar/cancelar; select de lotes).

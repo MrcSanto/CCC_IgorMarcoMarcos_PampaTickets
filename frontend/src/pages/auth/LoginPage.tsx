@@ -80,24 +80,6 @@ export const LoginPage = () => {
           {loading ? "Entrando…" : "Entrar →"}
         </button>
       </form>
-      <div
-        style={{
-          fontSize: 12,
-          color: "var(--pt-text-dim)",
-          textAlign: "center",
-          marginTop: 12,
-        }}
-      >
-        Sem backend rodando? Use{" "}
-        <Link to="/inicio" style={{ color: "var(--pt-accent)" }}>
-          /inicio
-        </Link>{" "}
-        ou{" "}
-        <Link to="/organizador" style={{ color: "var(--pt-accent)" }}>
-          /organizador
-        </Link>{" "}
-        para ver o demo.
-      </div>
     </AuthShell>
   );
 };

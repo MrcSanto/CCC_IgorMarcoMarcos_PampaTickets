@@ -34,7 +34,7 @@ Este diretório contém o **frontend SPA** em React + TypeScript que consome o b
 
 ```
 frontend/
-├── public/                                # Assets estáticos servidos como estão (favicon etc.)
+├── public/                                # Assets estáticos servidos como estão (favicon.svg, logo.png)
 ├── src/
 │   ├── api/                               # Camada de comunicação com o backend (FastAPI)
 │   │   ├── client.ts                      # axios singleton + interceptor de JWT (localStorage)
@@ -49,7 +49,7 @@ frontend/
 │   ├── components/                        # Componentes reutilizáveis entre páginas
 │   │   ├── DateBlock.tsx                  # Bloco de data destacado (dia/mês/semana)
 │   │   ├── EventCard.tsx                  # Card de evento (grid e listas)
-│   │   ├── Logo.tsx                       # Logotipo pampatickets
+│   │   ├── Logo.tsx                       # Logotipo pampatickets (imagem public/logo.png + wordmark)
 │   │   ├── MetricCard.tsx                 # Card de métrica (dashboard organizador)
 │   │   ├── PageHeader.tsx                 # Cabeçalho padrão de página interna
 │   │   ├── ProgressBar.tsx                # Barra de progresso (ocupação de lote etc.)

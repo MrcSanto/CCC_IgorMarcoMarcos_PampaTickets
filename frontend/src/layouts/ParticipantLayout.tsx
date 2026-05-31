@@ -61,10 +61,6 @@ export const ParticipantLayout = () => {
             />
           </form>
 
-          <button className={styles.cityChip} type="button">
-            <span aria-hidden>📍</span> Porto Alegre <span aria-hidden>▾</span>
-          </button>
-
           {user ? (
             <Link to="/meus-ingressos" className={styles.avatar}>
               <span className={styles.avatarMark}>{initials(user.nome)}</span>

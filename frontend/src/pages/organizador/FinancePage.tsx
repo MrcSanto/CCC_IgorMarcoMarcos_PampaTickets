@@ -1,24 +1,25 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext, useParams } from "react-router-dom";
 
 import { baixarRelatorio } from "../../api/eventos";
 import { PageHeader } from "../../components/PageHeader";
-import { useActiveEvent } from "../../lib/active-event";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 import { extractErrorMessage } from "../../lib/errors";
 
 import shared from "./shared.module.css";
 
 export const FinancePage = () => {
-  const { evento, loading } = useActiveEvent();
+  const { id } = useParams<{ id: string }>();
+  const { evento, loading, error: notFound } = useOutletContext<OrgOutlet>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleDownload = async () => {
-    if (!evento) return;
+    if (!id) return;
     setBusy(true);
     setError(null);
     try {
-      await baixarRelatorio(evento.id);
+      await baixarRelatorio(id);
     } catch (err) {
       setError(extractErrorMessage(err, "Falha ao gerar o relatório."));
     } finally {
@@ -29,7 +30,7 @@ export const FinancePage = () => {
   if (loading && !evento) {
     return (
       <>
-        <PageHeader breadcrumb="Painel / Financeiro" title="Financeiro" />
+        <PageHeader breadcrumb="Financeiro" title="Financeiro" />
         <div className={shared.body}>
           <div className={shared.cardPadded}>Carregando…</div>
         </div>
@@ -37,22 +38,22 @@ export const FinancePage = () => {
     );
   }
 
-  if (!evento) {
+  if (!evento || notFound) {
     return (
       <>
-        <PageHeader breadcrumb="Painel / Financeiro" title="Financeiro" />
+        <PageHeader breadcrumb="Financeiro" title="Financeiro" />
         <div className={shared.body}>
           <div className={shared.cardPadded}>
-            <h3 className={shared.cardTitle}>Nenhum evento selecionado</h3>
+            <h3 className={shared.cardTitle}>Evento não encontrado</h3>
             <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)" }}>
-              Volte para o painel e escolha um evento para gerar o relatório.
+              Este evento não existe ou você não tem acesso a ele.
             </p>
             <Link
               to="/organizador"
               className={shared.btnSecondary}
               style={{ marginTop: 16, display: "inline-block" }}
             >
-              ← Ir para o painel
+              ← Todos os eventos
             </Link>
           </div>
         </div>
@@ -62,7 +63,7 @@ export const FinancePage = () => {
 
   return (
     <>
-      <PageHeader breadcrumb="Painel / Financeiro" title="Financeiro" />
+      <PageHeader breadcrumb={`${evento.nome} / Financeiro`} title="Financeiro" />
 
       <div className={shared.body}>
         {error && (
@@ -94,7 +95,7 @@ export const FinancePage = () => {
             >
               {busy ? "Gerando…" : "Baixar relatório PDF"}
             </button>
-            <Link to="/organizador/evento" className={shared.btnSecondary}>
+            <Link to={`/organizador/eventos/${id}`} className={shared.btnSecondary}>
               ← Voltar para o evento
             </Link>
           </div>

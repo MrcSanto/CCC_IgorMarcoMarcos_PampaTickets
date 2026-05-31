@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
 import { realizarCheckin, type CheckinResponse } from "../../api/checkin";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { useActiveEvent } from "../../lib/active-event";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 import { extractErrorMessage } from "../../lib/errors";
 
 import shared from "./shared.module.css";
@@ -18,7 +19,7 @@ type StreamEntry = {
 };
 
 export const CheckinPage = () => {
-  const { evento } = useActiveEvent();
+  const { evento } = useOutletContext<OrgOutlet>();
   const [hash, setHash] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [stream, setStream] = useState<StreamEntry[]>([]);
@@ -61,16 +62,6 @@ export const CheckinPage = () => {
       />
 
       <div className={shared.body}>
-        {!evento && (
-          <div
-            className={shared.cardPadded}
-            style={{ marginBottom: 16, color: "var(--pt-org-text-dim)" }}
-          >
-            Selecione um evento no painel para destacar o contexto. O check-in
-            valida via QR code e a posse do evento é checada no backend.
-          </div>
-        )}
-
         <div className={styles.charts}>
           <div className={shared.cardPadded}>
             <h3 className={shared.cardTitle}>Validar ingresso</h3>

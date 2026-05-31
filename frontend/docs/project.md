@@ -59,7 +59,7 @@ frontend/
 │   │   └── OrganizerLayout.tsx            # Tema claro — envolve as rotas sob /organizador
 │   ├── lib/                               # Utilitários puros (sem componentes React)
 │   │   ├── auth-store.ts                  # useCurrentUser + setStoredUser (sync via CustomEvent)
-│   │   ├── active-event.ts                # useActiveEvent — id do evento ativo do organizador em localStorage
+│   │   ├── active-event.ts                # useEvento(id) — hidrata o Evento do organizador a partir do :id da rota
 │   │   ├── errors.ts                      # extractErrorMessage — traduz erros do FastAPI/axios
 │   │   └── format.ts                      # money, dateShort, dateLong, dateFull, formatCpfCnpj, formatCelular
 │   ├── pages/                             # Telas (uma pasta por persona + auth)
@@ -76,15 +76,15 @@ frontend/
 │   │   │   ├── TicketsPage.tsx            # /eventos/:id/ingressos — confirmação pós-compra
 │   │   │   └── MyTicketsPage.tsx          # /meus-ingressos (UC07 — /api/ingressos/meus)
 │   │   ├── organizador/                   # Telas sob /organizador
-│   │   │   ├── DashboardPage.tsx          # /organizador — visão geral + métricas UC14 (/relatorio/resumo)
-│   │   │   ├── OrgEventoPage.tsx          # /organizador/evento — detalhe do evento ativo
-│   │   │   ├── LotesPage.tsx              # /organizador/lotes (UC03 — lista + criação inline)
-│   │   │   ├── CuponsPage.tsx             # /organizador/cupons (UC05)
-│   │   │   ├── CortesiasPage.tsx          # /organizador/cortesias (UC06)
-│   │   │   ├── CheckinPage.tsx            # /organizador/checkin (UC04)
+│   │   │   ├── DashboardPage.tsx          # /organizador — lista de eventos (clicar abre o detalhe)
+│   │   │   ├── OrgEventoPage.tsx          # /organizador/eventos/:id — overview do evento + métricas UC14 (/relatorio/resumo)
+│   │   │   ├── LotesPage.tsx              # /organizador/eventos/:id/lotes (UC03 — lista + criação inline)
+│   │   │   ├── CuponsPage.tsx             # /organizador/eventos/:id/cupons (UC05)
+│   │   │   ├── CortesiasPage.tsx          # /organizador/eventos/:id/cortesias (UC06)
+│   │   │   ├── CheckinPage.tsx            # /organizador/eventos/:id/checkin (UC04)
 │   │   │   ├── CreateEventPage.tsx        # /organizador/eventos/novo (UC02)
-│   │   │   ├── FinancePage.tsx            # /organizador/financeiro (UC14 — baixa o PDF)
-│   │   │   ├── AttendeesPage.tsx          # /organizador/participantes (GET /organizador/eventos/:id/ingressos)
+│   │   │   ├── FinancePage.tsx            # /organizador/eventos/:id/financeiro (UC14 — baixa o PDF)
+│   │   │   ├── AttendeesPage.tsx          # /organizador/eventos/:id/participantes (GET /organizador/eventos/:id/ingressos)
 │   │   │   ├── orgForms.module.css        # Estilos compartilhados de form + tabela (Cupons/Cortesias/Attendees)
 │   │   │   └── shared.module.css          # Estilos compartilhados das telas /organizador
 │   │   ├── LandingPage.tsx                # Página pública inicial (/)

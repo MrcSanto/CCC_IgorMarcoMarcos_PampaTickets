@@ -1,7 +1,16 @@
-.layout {
+.metricsHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.metrics {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+  margin-top: 16px;
 }
 
 .cover {

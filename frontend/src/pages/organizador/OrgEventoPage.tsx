@@ -1,47 +1,74 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useOutletContext, useParams } from "react-router-dom";
 
 import {
+  baixarRelatorio,
   cancelarEvento,
   encerrarEvento,
   gradientFor,
+  obterResumoRelatorio,
   publicarEvento,
   type Evento,
+  type RelatorioResumo,
 } from "../../api/eventos";
+import { MetricCard } from "../../components/MetricCard";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { useActiveEvent } from "../../lib/active-event";
 import { extractErrorMessage } from "../../lib/errors";
-import { dateLong } from "../../lib/format";
+import { dateLong, money } from "../../lib/format";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 
 import shared from "./shared.module.css";
 import styles from "./OrgEventoPage.module.css";
 
 export const OrgEventoPage = () => {
-  const navigate = useNavigate();
-  const { evento, loading } = useActiveEvent();
+  const { id } = useParams<{ id: string }>();
+  const { evento, loading, error: notFound } = useOutletContext<OrgOutlet>();
+
   const [current, setCurrent] = useState<Evento | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [resumo, setResumo] = useState<RelatorioResumo | null>(null);
+  const [resumoError, setResumoError] = useState<string | null>(null);
+  const [baixando, setBaixando] = useState(false);
+
   const ev = current ?? evento;
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    setResumo(null);
+    setResumoError(null);
+    obterResumoRelatorio(id)
+      .then((data) => {
+        if (!cancelled) setResumo(data);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setResumoError(extractErrorMessage(err, "Falha ao carregar métricas."));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   if (loading && !ev) return <div className={shared.body}>Carregando…</div>;
 
-  if (!ev) {
+  if (!ev || notFound) {
     return (
       <div className={shared.body}>
         <div className={shared.cardPadded}>
-          <h3 className={shared.cardTitle}>Nenhum evento selecionado</h3>
+          <h3 className={shared.cardTitle}>Evento não encontrado</h3>
           <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)" }}>
-            Volte para o painel e escolha um evento para gerenciar.
+            Este evento não existe ou você não tem acesso a ele.
           </p>
           <Link
             to="/organizador"
             className={shared.btnPrimary}
             style={{ marginTop: 16, display: "inline-block" }}
           >
-            Ir para o painel →
+            ← Todos os eventos
           </Link>
         </div>
       </div>
@@ -49,7 +76,6 @@ export const OrgEventoPage = () => {
   }
 
   const transicionar = async (acao: "publicar" | "encerrar" | "cancelar") => {
-    if (!ev) return;
     setBusy(true);
     setError(null);
     try {
@@ -64,6 +90,17 @@ export const OrgEventoPage = () => {
       setError(extractErrorMessage(err, `Falha ao ${acao} o evento.`));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const baixarPdf = async () => {
+    setBaixando(true);
+    try {
+      await baixarRelatorio(ev.id);
+    } catch (err) {
+      setResumoError(extractErrorMessage(err, "Falha ao baixar o relatório."));
+    } finally {
+      setBaixando(false);
     }
   };
 
@@ -102,12 +139,6 @@ export const OrgEventoPage = () => {
                 Cancelar evento
               </button>
             )}
-            <button
-              className={shared.btnSecondary}
-              onClick={() => navigate("/organizador/eventos/novo")}
-            >
-              + Novo evento
-            </button>
           </>
         }
       />
@@ -122,55 +153,94 @@ export const OrgEventoPage = () => {
           </div>
         )}
 
-        <div className={styles.layout}>
-          <div className={shared.card}>
-            <div className={styles.cover} style={{ background: gradientFor(ev.id) }} />
-            <div className={styles.coverInfo}>
-              <div className={styles.metaGrid}>
-                <div>
-                  <div className={shared.eyebrow}>Início</div>
-                  <div className={styles.metaValue}>{dateLong(ev.data_inicio)}</div>
-                </div>
-                <div>
-                  <div className={shared.eyebrow}>Encerramento</div>
-                  <div className={styles.metaValue}>{dateLong(ev.data_fim)}</div>
-                </div>
-                <div>
-                  <div className={shared.eyebrow}>Local</div>
-                  <div className={styles.metaValue}>{ev.local}</div>
-                </div>
-              </div>
-              <div className={styles.descBlock}>
-                <div className={shared.eyebrow}>Descrição</div>
-                <p className={styles.desc}>
-                  {ev.descricao ?? "Sem descrição cadastrada."}
-                </p>
-              </div>
-            </div>
+        <div className={shared.cardPadded} style={{ marginBottom: 16 }}>
+          <div className={styles.metricsHead}>
+            <h3 className={shared.cardTitle}>Métricas e financeiro</h3>
+            {resumo && (
+              <button
+                type="button"
+                className={shared.btnSecondary}
+                onClick={baixarPdf}
+                disabled={baixando}
+              >
+                {baixando ? "Gerando…" : "Baixar relatório PDF"}
+              </button>
+            )}
           </div>
 
-          <div className={styles.aside}>
-            <div className={shared.cardPadded}>
-              <h3 className={shared.cardTitle}>Próximas ações</h3>
-              <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)", fontSize: 13 }}>
-                Use os atalhos abaixo para gerenciar os lotes, fazer check-in
-                ao vivo ou acompanhar participantes.
+          {resumoError && (
+            <div style={{ marginTop: 12, color: "var(--pt-org-text-dim)" }}>
+              {resumoError}
+            </div>
+          )}
+          {!resumoError && resumo === null && (
+            <div style={{ marginTop: 12, color: "var(--pt-org-text-dim)" }}>
+              Carregando métricas…
+            </div>
+          )}
+          {resumo && (
+            <div className={styles.metrics}>
+              <MetricCard
+                label="Receita líquida"
+                value={money(resumo.receita_liquida)}
+                tone="ok"
+                sub={`Bruta: ${money(resumo.receita_bruta)}`}
+              />
+              <MetricCard
+                label="Descontos (cupons)"
+                value={money(resumo.desconto_cupons)}
+                sub={`Reembolsos: ${money(resumo.valor_reembolsado)}`}
+              />
+              <MetricCard
+                label="Ingressos vendidos"
+                value={resumo.total_ingressos.toLocaleString("pt-BR")}
+                sub={`Check-ins: ${resumo.total_checkins.toLocaleString("pt-BR")}`}
+              />
+              <MetricCard
+                label="Comparecimento"
+                value={`${(resumo.taxa_comparecimento * 100).toFixed(0)}%`}
+              />
+            </div>
+          )}
+        </div>
+
+        <div className={shared.card}>
+          <div className={styles.cover} style={{ background: gradientFor(ev.id) }} />
+          <div className={styles.coverInfo}>
+            <div className={styles.metaGrid}>
+              <div>
+                <div className={shared.eyebrow}>Início</div>
+                <div className={styles.metaValue}>{dateLong(ev.data_inicio)}</div>
+              </div>
+              <div>
+                <div className={shared.eyebrow}>Encerramento</div>
+                <div className={styles.metaValue}>{dateLong(ev.data_fim)}</div>
+              </div>
+              <div>
+                <div className={shared.eyebrow}>Local</div>
+                <div className={styles.metaValue}>{ev.local}</div>
+              </div>
+            </div>
+            <div className={styles.descBlock}>
+              <div className={shared.eyebrow}>Descrição</div>
+              <p className={styles.desc}>
+                {ev.descricao ?? "Sem descrição cadastrada."}
               </p>
             </div>
           </div>
         </div>
 
         <div className={styles.actions}>
-          <Link to="/organizador/lotes" className={shared.btnPrimary}>
+          <Link to={`/organizador/eventos/${ev.id}/lotes`} className={shared.btnPrimary}>
             Gerenciar lotes & vendas →
           </Link>
-          <Link to="/organizador/checkin" className={shared.btnSecondary}>
+          <Link to={`/organizador/eventos/${ev.id}/checkin`} className={shared.btnSecondary}>
             Iniciar check-in →
           </Link>
-          <Link to="/organizador/participantes" className={shared.btnSecondary}>
+          <Link to={`/organizador/eventos/${ev.id}/participantes`} className={shared.btnSecondary}>
             Ver participantes →
           </Link>
-          <Link to="/organizador/financeiro" className={shared.btnSecondary}>
+          <Link to={`/organizador/eventos/${ev.id}/financeiro`} className={shared.btnSecondary}>
             Relatório financeiro →
           </Link>
         </div>

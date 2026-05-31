@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import { criarEvento, gradientFor, type Evento } from "../../api/eventos";
 import { PageHeader } from "../../components/PageHeader";
-import { setActiveEventId } from "../../lib/active-event";
 import { extractErrorMessage } from "../../lib/errors";
 
 import shared from "./shared.module.css";
@@ -33,8 +32,7 @@ export const CreateEventPage = () => {
         data_fim: dataFim,
         local,
       });
-      setActiveEventId(novo.id);
-      navigate("/organizador/evento");
+      navigate(`/organizador/eventos/${novo.id}`);
     } catch (err) {
       setError(extractErrorMessage(err, "Falha ao criar o evento."));
     } finally {

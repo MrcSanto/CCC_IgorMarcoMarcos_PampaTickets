@@ -10,6 +10,14 @@
 **Data:** 30/05/2026
 **Responsável:** Marco Antonio Santolin
 
+> Reformulação do painel do organizador (30/05/2026) — **rotas por evento, fim do "evento ativo" em localStorage**:
+> 1. **Rotas aninhadas por evento**: as telas do organizador passaram de rotas singulares (`/organizador/lotes`, `/cupons`, …) para `/organizador/eventos/:id/...` (`/lotes`, `/cupons`, `/cortesias`, `/checkin`, `/participantes`, `/financeiro`). O `:id` na URL é a fonte da verdade — dá pra abrir por link, o back do navegador e o refresh funcionam.
+> 2. **Fim do localStorage de evento ativo**: `lib/active-event.ts` deixou de guardar/emitir o id em `localStorage`; virou o hook `useEvento(id)` que só hidrata o `Evento` a partir do id da rota. `getActiveEventId`/`setActiveEventId`/`useActiveEvent` removidos.
+> 3. **OrganizerLayout**: lê o evento ativo da URL via `useMatch("/organizador/eventos/:id/*")`, hidrata uma vez e repassa via `Outlet context` (`type OrgOutlet = { evento, loading, error }`). A sidebar tem duas camadas: "Eventos" (lista) sempre; seção do evento (nome + `StatusPill` + "← Todos os eventos") só quando há `:id`. Removidos os itens cinza desabilitados (`TOP_NAV_DISABLED`) e a marca "P" hard-coded (agora usa `<Logo>` imagem, com `data-theme="dark"` no brand p/ contraste na sidebar escura).
+> 4. **DashboardPage** virou só a **lista** de eventos; clicar abre `/organizador/eventos/:id`. As métricas/financeiro migraram para a **OrgEventoPage** (overview: métricas + status + descrição + transições + atalhos).
+> 5. **Sub-páginas** trocaram `useActiveEvent()` por `useParams<{id}>()` (id p/ API) + `useOutletContext<OrgOutlet>()` (nome do evento no breadcrumb). Empty-states "Nenhum evento selecionado" removidos; id inválido cai em "Evento não encontrado".
+> 6. **CreateEventPage** navega para `/organizador/eventos/${novo.id}` após criar.
+>
 > Ajustes de UI (30/05/2026) — **polimento de marca e limpeza de placeholders**:
 > 1. **Logo por imagem**: `Logo.tsx` deixou de desenhar o quadradinho "P" via CSS e passou a usar a imagem real da marca (`public/logo.png`) como ícone, mantendo o wordmark "pampa*tickets*" ao lado (`size` controla a altura do `<img>`). Reflete em landing, auth (login/cadastro) e topo do participante. CSS: `.mark` virou `.img`; `.wordmark` mantido.
 > 2. **Login limpo**: removido o texto de teste "Sem backend rodando? Use /inicio ou /organizador para ver o demo." da `LoginPage`.
@@ -104,7 +112,7 @@ Nada em aberto. O painel do organizador agora cobre todos os endpoints do backen
 - **Sem Context para auth**: app é pequeno; `useCurrentUser` lê de `localStorage` e escuta `CustomEvent` + `storage`. Re-render só onde o hook é usado.
 - **Sem fallback para mocks** (26/05/2026): a partir desta sessão, qualquer falha de API mostra mensagem de erro real ou estado vazio. `src/data/sample.ts` foi deletado, junto com toda a pasta `data/`. Decisão consciente: melhor refletir o estado real do backend (inclusive vazio) do que mascarar com dados fake que dão a impressão de funcionar.
 - **Campos sem suporte saíram da UI** (26/05/2026): categoria, urgente, destaque, vendidos, precoMin, tags, imagem upload — todos eram inventados. Imagem virou `gradientFor(id)` (gradient determinístico por id). Categoria fica como follow-up se o backend ganhar o campo.
-- **Seletor de evento ativo via localStorage** (26/05/2026): `lib/active-event.ts` persiste o id do "evento ativo do organizador" e `useActiveEvent()` hidrata o `Evento` completo. Atalho enquanto as rotas do organizador são singulares — some quando migrar para `/organizador/eventos/:id/...`.
+- ~~**Seletor de evento ativo via localStorage** (26/05/2026)~~ **superado em 30/05/2026**: a fonte da verdade do evento do organizador passou a ser o `:id` na URL (`/organizador/eventos/:id/...`). `lib/active-event.ts` virou o hook `useEvento(id)` (sem `localStorage`); o `OrganizerLayout` hidrata via `useMatch` e repassa por `Outlet context`.
 - **Export nomeado** em todos os componentes (`export const Foo = ...`). Sem `export default`. Facilita renomeação e busca.
 - **Cores e tokens** declarados em `:root` dentro de `src/index.css`. Referência via `var(--...)`. Não há ainda um arquivo separado de design tokens.
 - **Tema por persona via layout** (`ParticipantLayout` escuro vs `OrganizerLayout` claro) em vez de toggle global. Decisão consciente: as personas têm contextos visuais distintos.
@@ -117,7 +125,7 @@ Nada em aberto. O painel do organizador agora cobre todos os endpoints do backen
 ## Pendências conhecidas
 
 - **Guards de rota ausentes**: hoje qualquer um navega para `/inicio`, `/meus-ingressos` ou `/organizador/*` sem auth. Backend rejeita as chamadas, mas a UX é ruim. Prioridade alta junto com o checkout.
-- **Rotas singulares do organizador**: `/organizador/evento`, `/organizador/lotes`, `/organizador/cupons`, `/organizador/cortesias`, `/organizador/checkin`, `/organizador/participantes` assumem um evento ativo (`useActiveEvent`). Quando o front passar a suportar múltiplos eventos, migrar para `/organizador/eventos/:id/...` (nested).
+- ~~**Rotas singulares do organizador**~~ resolvido em 30/05/2026: migradas para `/organizador/eventos/:id/...` (nested). O id vem da URL (`useParams`/`useMatch`), hidratado uma vez no `OrganizerLayout` e repassado via `Outlet context`. `useActiveEvent`/`localStorage` removidos (hook `useEvento(id)` no lugar).
 - **Sem refresh token**: quando o JWT expira (60min), o usuário vê erros 401 silenciosos. Solução depende do backend implementar refresh primeiro.
 - **Sem testes**: nenhum Vitest/Testing Library configurado. Dívida crítica antes do deploy.
 - **Estados de loading/erro inconsistentes**: cada página trata do seu jeito. Falta um padrão (skeleton + retry).

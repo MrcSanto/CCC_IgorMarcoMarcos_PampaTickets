@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 
 import {
   criarCupom,
@@ -12,7 +12,7 @@ import {
 } from "../../api/cupons";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { useActiveEvent } from "../../lib/active-event";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 import { extractErrorMessage } from "../../lib/errors";
 import { dateLong, money } from "../../lib/format";
 
@@ -25,7 +25,8 @@ const formatValor = (c: Cupom): string =>
     : money(c.valor_desconto);
 
 export const CuponsPage = () => {
-  const { evento } = useActiveEvent();
+  const { id } = useParams<{ id: string }>();
+  const { evento } = useOutletContext<OrgOutlet>();
   const [cupons, setCupons] = useState<Cupom[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,9 +41,9 @@ export const CuponsPage = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!evento) return;
+    if (!id) return;
     let cancelled = false;
-    listarCupons(evento.id)
+    listarCupons(id)
       .then((data) => {
         if (!cancelled) setCupons(data);
       })
@@ -53,7 +54,7 @@ export const CuponsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [evento]);
+  }, [id]);
 
   const toggleAtivo = async (cupom: Cupom) => {
     try {
@@ -78,7 +79,7 @@ export const CuponsPage = () => {
 
   const criarNovoCupom = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!evento) return;
+    if (!id) return;
     setSubmitting(true);
     setFormError(null);
     try {
@@ -92,7 +93,7 @@ export const CuponsPage = () => {
         valido_ate: new Date(validoAte).toISOString(),
         ativo,
       };
-      const novo = await criarCupom(evento.id, payload);
+      const novo = await criarCupom(id, payload);
       setCupons((prev) => (prev ? [...prev, novo] : [novo]));
       setCodigo("");
       setTipo("PERCENTUAL");
@@ -108,30 +109,10 @@ export const CuponsPage = () => {
     }
   };
 
-  if (!evento) {
-    return (
-      <div className={shared.body}>
-        <div className={shared.cardPadded}>
-          <h3 className={shared.cardTitle}>Nenhum evento selecionado</h3>
-          <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)" }}>
-            Volte para o painel e escolha um evento para gerenciar cupons.
-          </p>
-          <Link
-            to="/organizador"
-            className={shared.btnPrimary}
-            style={{ marginTop: 16, display: "inline-block" }}
-          >
-            Ir para o painel →
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <PageHeader
-        breadcrumb={`${evento.nome} / Cupons`}
+        breadcrumb={`${evento?.nome ?? "Evento"} / Cupons`}
         title="Cupons de desconto"
         actions={
           <button

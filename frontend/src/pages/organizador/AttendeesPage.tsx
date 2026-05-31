@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 
 import {
   listarIngressosDoEvento,
@@ -7,7 +7,7 @@ import {
 } from "../../api/ingressos";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { useActiveEvent } from "../../lib/active-event";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 import { extractErrorMessage } from "../../lib/errors";
 import { dateLong } from "../../lib/format";
 
@@ -15,15 +15,16 @@ import shared from "./shared.module.css";
 import styles from "./orgForms.module.css";
 
 export const AttendeesPage = () => {
-  const { evento } = useActiveEvent();
+  const { id } = useParams<{ id: string }>();
+  const { evento } = useOutletContext<OrgOutlet>();
   const [ingressos, setIngressos] = useState<IngressoOrganizador[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    if (!evento) return;
+    if (!id) return;
     let cancelled = false;
-    listarIngressosDoEvento(evento.id)
+    listarIngressosDoEvento(id)
       .then((data) => {
         if (!cancelled) setIngressos(data);
       })
@@ -34,7 +35,7 @@ export const AttendeesPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [evento]);
+  }, [id]);
 
   const filtrados = useMemo(() => {
     if (!ingressos) return null;
@@ -47,30 +48,10 @@ export const AttendeesPage = () => {
     );
   }, [ingressos, busca]);
 
-  if (!evento) {
-    return (
-      <div className={shared.body}>
-        <div className={shared.cardPadded}>
-          <h3 className={shared.cardTitle}>Nenhum evento selecionado</h3>
-          <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)" }}>
-            Volte para o painel e escolha um evento para ver os participantes.
-          </p>
-          <Link
-            to="/organizador"
-            className={shared.btnPrimary}
-            style={{ marginTop: 16, display: "inline-block" }}
-          >
-            Ir para o painel →
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <PageHeader
-        breadcrumb={`${evento.nome} / Participantes`}
+        breadcrumb={`${evento?.nome ?? "Evento"} / Participantes`}
         title="Participantes"
       />
 

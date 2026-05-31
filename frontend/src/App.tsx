@@ -41,17 +41,17 @@ export const App = () => (
       <Route path="/meus-ingressos" element={<MyTicketsPage />} />
     </Route>
 
-    {/* Organizador (tema claro) */}
+    {/* Organizador (tema claro) — fonte da verdade do evento é o :id na URL */}
     <Route path="/organizador" element={<OrganizerLayout />}>
       <Route index element={<DashboardPage />} />
-      <Route path="evento" element={<OrgEventoPage />} />
       <Route path="eventos/novo" element={<CreateEventPage />} />
-      <Route path="lotes" element={<LotesPage />} />
-      <Route path="cupons" element={<CuponsPage />} />
-      <Route path="cortesias" element={<CortesiasPage />} />
-      <Route path="checkin" element={<CheckinPage />} />
-      <Route path="participantes" element={<AttendeesPage />} />
-      <Route path="financeiro" element={<FinancePage />} />
+      <Route path="eventos/:id" element={<OrgEventoPage />} />
+      <Route path="eventos/:id/lotes" element={<LotesPage />} />
+      <Route path="eventos/:id/cupons" element={<CuponsPage />} />
+      <Route path="eventos/:id/cortesias" element={<CortesiasPage />} />
+      <Route path="eventos/:id/checkin" element={<CheckinPage />} />
+      <Route path="eventos/:id/participantes" element={<AttendeesPage />} />
+      <Route path="eventos/:id/financeiro" element={<FinancePage />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/" replace />} />

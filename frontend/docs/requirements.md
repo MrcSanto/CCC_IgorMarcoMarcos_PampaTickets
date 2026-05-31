@@ -12,7 +12,7 @@ Documento de referência para decisões arquiteturais do frontend. Toda contribu
 | `layouts/` | Cascas (header/sidebar/footer) compartilhadas entre rotas da mesma persona. | Conter regra de negócio ou chamada HTTP. |
 | `components/` | Blocos visuais reutilizáveis entre páginas (cards, pílulas, barras, headers). | Conhecer rotas específicas ou fazer chamadas HTTP. |
 | `api/` | **Toda** comunicação com o backend FastAPI. Funções tipadas que retornam DTOs. | Conter JSX, hooks React ou ler diretamente do `localStorage` (exceto o cliente para o JWT). |
-| `lib/` | Utilitários puros — formatação (`format.ts`), erros (`errors.ts`), store de auth (`auth-store.ts`), seletor de evento ativo (`active-event.ts`). | Conter JSX (exceto hooks customizados quando necessário). |
+| `lib/` | Utilitários puros — formatação (`format.ts`), erros (`errors.ts`), store de auth (`auth-store.ts`), hidratação do evento por id de rota (`active-event.ts` → `useEvento`). | Conter JSX (exceto hooks customizados quando necessário). |
 
 **Dependência unidirecional:** `pages → {components, api, lib}` e `api → lib`. Componentes nunca importam de páginas; `lib/` nunca importa de `api/`.
 
@@ -127,15 +127,15 @@ Mapa completo em [`src/App.tsx`](../src/App.tsx). Convenção: **rotas flat** es
 
 | Rota | Tela |
 |---|---|
-| `/organizador` | `DashboardPage` (visão geral + métricas UC14) |
-| `/organizador/evento` | `OrgEventoPage` (detalhes do evento ativo) |
+| `/organizador` | `DashboardPage` (lista de eventos) |
 | `/organizador/eventos/novo` | `CreateEventPage` (UC02) |
-| `/organizador/lotes` | `LotesPage` (UC03 — lista + criação) |
-| `/organizador/cupons` | `CuponsPage` (UC05) |
-| `/organizador/cortesias` | `CortesiasPage` (UC06) |
-| `/organizador/checkin` | `CheckinPage` (UC04) |
-| `/organizador/participantes` | `AttendeesPage` (ingressos vendidos do evento) |
-| `/organizador/financeiro` | `FinancePage` (UC14 — baixa o PDF) |
+| `/organizador/eventos/:id` | `OrgEventoPage` (overview do evento + métricas UC14) |
+| `/organizador/eventos/:id/lotes` | `LotesPage` (UC03 — lista + criação) |
+| `/organizador/eventos/:id/cupons` | `CuponsPage` (UC05) |
+| `/organizador/eventos/:id/cortesias` | `CortesiasPage` (UC06) |
+| `/organizador/eventos/:id/checkin` | `CheckinPage` (UC04) |
+| `/organizador/eventos/:id/participantes` | `AttendeesPage` (ingressos vendidos do evento) |
+| `/organizador/eventos/:id/financeiro` | `FinancePage` (UC14 — baixa o PDF) |
 | `*` | Redirect para `/` |
 
 ### Notas
@@ -143,7 +143,7 @@ Mapa completo em [`src/App.tsx`](../src/App.tsx). Convenção: **rotas flat** es
 - Hoje **não há guard de rota** — qualquer um navega para `/inicio`, `/meus-ingressos` ou `/organizador/*`. O backend é a fonte de verdade (rejeita request sem JWT). Adicionar guard é um TODO listado em `state.md`.
 - A escolha de redirecionamento pós-login usa `usuario.perfil` retornado pelo backend (`PARTICIPANTE` → `/inicio`, `ORGANIZADOR` → `/organizador`).
 - O `ParticipantLayout` envolve tanto a vitrine pública quanto as telas autenticadas. O layout já trata o estado deslogado no topo (mostra "Entrar" em vez do avatar).
-- As rotas do organizador ainda são **singulares** (`/organizador/evento`, `/organizador/lotes`) porque o MVP assume um evento ativo. Migrar para `/organizador/eventos/:id/...` quando houver suporte a múltiplos eventos no front.
+- As rotas do organizador são **aninhadas por evento** (`/organizador/eventos/:id/...`): o `:id` na URL é a fonte da verdade. O `OrganizerLayout` lê o id ativo via `useMatch`, hidrata o `Evento` uma vez (hook `useEvento`) e o repassa às páginas por `Outlet context` (`type OrgOutlet`). As páginas pegam o id por `useParams` (para a API) e o `evento` por `useOutletContext` (para o nome no breadcrumb). Não há mais "evento ativo" em `localStorage`.
 
 ---
 

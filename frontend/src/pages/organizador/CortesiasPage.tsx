@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 
 import {
   cancelarCortesia,
@@ -11,7 +11,7 @@ import {
 import { listarLotesOrganizador, type Lote } from "../../api/lotes";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusPill } from "../../components/StatusPill";
-import { useActiveEvent } from "../../lib/active-event";
+import type { OrgOutlet } from "../../layouts/OrganizerLayout";
 import { extractErrorMessage } from "../../lib/errors";
 import { dateLong } from "../../lib/format";
 
@@ -19,7 +19,8 @@ import shared from "./shared.module.css";
 import styles from "./orgForms.module.css";
 
 export const CortesiasPage = () => {
-  const { evento } = useActiveEvent();
+  const { id } = useParams<{ id: string }>();
+  const { evento } = useOutletContext<OrgOutlet>();
   const [cortesias, setCortesias] = useState<Cortesia[] | null>(null);
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +33,9 @@ export const CortesiasPage = () => {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!evento) return;
+    if (!id) return;
     let cancelled = false;
-    Promise.all([
-      listarCortesias(evento.id),
-      listarLotesOrganizador(evento.id),
-    ])
+    Promise.all([listarCortesias(id), listarLotesOrganizador(id)])
       .then(([cs, ls]) => {
         if (cancelled) return;
         setCortesias(cs);
@@ -50,7 +48,7 @@ export const CortesiasPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [evento]);
+  }, [id]);
 
   const cancelar = async (cortesia: Cortesia) => {
     if (!confirm(`Cancelar a cortesia de "${cortesia.beneficiado_nome}"?`)) return;
@@ -66,7 +64,7 @@ export const CortesiasPage = () => {
 
   const emitirNova = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!evento) return;
+    if (!id) return;
     setSubmitting(true);
     setFormError(null);
     try {
@@ -75,7 +73,7 @@ export const CortesiasPage = () => {
         email_beneficiado: email,
         motivo: motivo || null,
       };
-      const nova = await emitirCortesia(evento.id, payload);
+      const nova = await emitirCortesia(id, payload);
       setCortesias((prev) => (prev ? [nova, ...prev] : [nova]));
       setLoteId("");
       setEmail("");
@@ -88,30 +86,10 @@ export const CortesiasPage = () => {
     }
   };
 
-  if (!evento) {
-    return (
-      <div className={shared.body}>
-        <div className={shared.cardPadded}>
-          <h3 className={shared.cardTitle}>Nenhum evento selecionado</h3>
-          <p style={{ marginTop: 8, color: "var(--pt-org-text-dim)" }}>
-            Volte para o painel e escolha um evento para emitir cortesias.
-          </p>
-          <Link
-            to="/organizador"
-            className={shared.btnPrimary}
-            style={{ marginTop: 16, display: "inline-block" }}
-          >
-            Ir para o painel →
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <PageHeader
-        breadcrumb={`${evento.nome} / Cortesias`}
+        breadcrumb={`${evento?.nome ?? "Evento"} / Cortesias`}
         title="Cortesias"
         actions={
           <button

@@ -91,6 +91,7 @@ export const AttendeesPage = () => {
                 <tr>
                   <th>Participante</th>
                   <th>Lote</th>
+                  <th>QR Code</th>
                   <th>Status</th>
                   <th>Emitido em</th>
                 </tr>
@@ -104,6 +105,18 @@ export const AttendeesPage = () => {
                     </td>
                     <td>
                       <span className={styles.tipo}>{i.lote_nome}</span>
+                    </td>
+                    <td
+                      className={styles.dim}
+                      style={{
+                        fontFamily: "var(--pt-font-mono)",
+                        fontSize: 11,
+                        wordBreak: "break-all",
+                        maxWidth: 220,
+                      }}
+                      title={i.qr_code_hash}
+                    >
+                      {i.qr_code_hash}
                     </td>
                     <td>
                       <StatusPill status={i.status} />

@@ -20,6 +20,7 @@ export type Ingresso = {
 // Visão do organizador: ingressos vendidos de um evento, com dados do participante.
 export type IngressoOrganizador = {
   id: string;
+  qr_code_hash: string;
   status: StatusIngresso;
   emitido_em: string;
   lote_nome: string;

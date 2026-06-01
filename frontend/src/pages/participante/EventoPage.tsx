@@ -8,6 +8,8 @@ import {
   type Evento,
 } from "../../api/eventos";
 import { listarLotes, type Lote } from "../../api/lotes";
+import { validarCupom, type CupomValidacao } from "../../api/cupons";
+import { useCurrentUser } from "../../lib/auth-store";
 import { extractErrorMessage } from "../../lib/errors";
 import { dateFull, money } from "../../lib/format";
 
@@ -17,15 +19,24 @@ export type PendingOrder = {
   eventoId: string;
   itens: { loteId: string; quantidade: number }[];
   total: number;
+  cupomCodigo?: string;
+  desconto?: number;
 };
 
 export const EventoPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = useCurrentUser();
   const [ev, setEv] = useState<Evento | null>(null);
   const [lotes, setLotes] = useState<Lote[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Record<string, number>>({});
+
+  const [cupomCodigo, setCupomCodigo] = useState("");
+  const [cupom, setCupom] = useState<CupomValidacao | null>(null);
+  const [cupomSubtotal, setCupomSubtotal] = useState<number | null>(null);
+  const [cupomErro, setCupomErro] = useState<string | null>(null);
+  const [validandoCupom, setValidandoCupom] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -57,6 +68,35 @@ export const EventoPage = () => {
     return { qty, subtotal };
   }, [lotes, selected]);
 
+  // O desconto é calculado sobre o subtotal. Se a seleção muda, o cupom validado
+  // para o subtotal anterior deixa de valer — descartamos sem precisar de effect.
+  const cupomAtivo =
+    cupom && cupomSubtotal === totals.subtotal ? cupom : null;
+
+  const aplicarCupom = async () => {
+    if (!id || totals.subtotal <= 0) return;
+    setValidandoCupom(true);
+    setCupomErro(null);
+    try {
+      const validado = await validarCupom(id, cupomCodigo.trim(), totals.subtotal);
+      setCupom(validado);
+      setCupomSubtotal(totals.subtotal);
+    } catch (err) {
+      setCupom(null);
+      setCupomSubtotal(null);
+      setCupomErro(extractErrorMessage(err, "Não foi possível validar o cupom."));
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
+  const removerCupom = () => {
+    setCupom(null);
+    setCupomSubtotal(null);
+    setCupomCodigo("");
+    setCupomErro(null);
+  };
+
   if (error) {
     return <div className={styles.empty}>{error}</div>;
   }
@@ -66,7 +106,7 @@ export const EventoPage = () => {
   }
 
   const d = dateFull(ev.data_inicio);
-  const total = totals.subtotal;
+  const total = cupomAtivo ? cupomAtivo.valor_final : totals.subtotal;
 
   const checkout = () => {
     const pending: PendingOrder = {
@@ -75,6 +115,8 @@ export const EventoPage = () => {
         .filter(([, n]) => n > 0)
         .map(([loteId, n]) => ({ loteId, quantidade: n })),
       total,
+      cupomCodigo: cupomAtivo?.codigo,
+      desconto: cupomAtivo?.valor_desconto_aplicado,
     };
     sessionStorage.setItem("pt_pending_order", JSON.stringify(pending));
     navigate(`/eventos/${ev.id}/checkout`);
@@ -189,6 +231,66 @@ export const EventoPage = () => {
               </span>
               <span>{money(totals.subtotal)}</span>
             </div>
+
+            <div className={styles.cupomBox}>
+              <div className={styles.cupomLabel}>Cupom de desconto</div>
+              {cupomAtivo ? (
+                <div className={styles.cupomAplicado}>
+                  <span>
+                    ✓ <strong>{cupomAtivo.codigo}</strong> aplicado
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.cupomRemover}
+                    onClick={removerCupom}
+                  >
+                    Remover
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.cupomRow}>
+                  <input
+                    className={styles.cupomInput}
+                    value={cupomCodigo}
+                    onChange={(e) => setCupomCodigo(e.target.value.toUpperCase())}
+                    placeholder="Digite o código"
+                    disabled={totals.qty === 0 || !user}
+                  />
+                  <button
+                    type="button"
+                    className={styles.cupomBtn}
+                    onClick={aplicarCupom}
+                    disabled={
+                      totals.qty === 0 ||
+                      !user ||
+                      !cupomCodigo.trim() ||
+                      validandoCupom
+                    }
+                  >
+                    {validandoCupom ? "…" : "Aplicar"}
+                  </button>
+                </div>
+              )}
+              {totals.qty === 0 && (
+                <div className={styles.cupomHint}>
+                  Selecione ingressos para validar um cupom.
+                </div>
+              )}
+              {totals.qty > 0 && !user && (
+                <div className={styles.cupomHint}>
+                  Faça login para validar um cupom.
+                </div>
+              )}
+              {cupomErro && <div className={styles.cupomErro}>⚠ {cupomErro}</div>}
+            </div>
+
+            {cupomAtivo && (
+              <div className={styles.sidebarRow}>
+                <span className={styles.sidebarLabel}>Desconto</span>
+                <span>−{money(cupomAtivo.valor_desconto_aplicado)}</span>
+              </div>
+            )}
+
             <div className={styles.sidebarTotal}>
               <span>Total</span>
               <span>{money(total)}</span>

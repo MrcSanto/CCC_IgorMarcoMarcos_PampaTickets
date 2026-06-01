@@ -3,11 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { obterEvento, type Evento } from "../../api/eventos";
 import { listarLotes, type Lote } from "../../api/lotes";
-import {
-  criarPedido,
-  type MetodoPagamento,
-  type PedidoCriado,
-} from "../../api/pedidos";
+import { criarPedido, type MetodoPagamento } from "../../api/pedidos";
+import { validarCupom, type CupomValidacao } from "../../api/cupons";
 import { useCurrentUser } from "../../lib/auth-store";
 import { extractErrorMessage } from "../../lib/errors";
 import { dateLong, formatCelular, formatCpfCnpj, money } from "../../lib/format";
@@ -42,7 +39,11 @@ export const CheckoutPage = () => {
   const [metodo, setMetodo] = useState<MetodoPagamento>("PIX");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pedidoCriado, setPedidoCriado] = useState<PedidoCriado | null>(null);
+
+  const [cupomCodigo, setCupomCodigo] = useState(pending?.cupomCodigo ?? "");
+  const [cupom, setCupom] = useState<CupomValidacao | null>(null);
+  const [cupomErro, setCupomErro] = useState<string | null>(null);
+  const [validandoCupom, setValidandoCupom] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -62,11 +63,61 @@ export const CheckoutPage = () => {
     };
   }, [id]);
 
+  // Revalida automaticamente um cupom trazido da tela do evento, para já exibir
+  // o desconto sem o participante precisar redigitar e clicar em "Aplicar".
+  useEffect(() => {
+    if (!ev || !lotes || !pending?.cupomCodigo) return;
+    const subtotal = pending.itens.reduce((acc, it) => {
+      const lote = lotes.find((l) => l.id === it.loteId);
+      return acc + (lote ? lote.preco * it.quantidade : 0);
+    }, 0);
+    if (subtotal <= 0) return;
+    let cancelled = false;
+    validarCupom(ev.id, pending.cupomCodigo, subtotal)
+      .then((v) => {
+        if (!cancelled) setCupom(v);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setCupomErro(extractErrorMessage(err, "Não foi possível validar o cupom."));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ev, lotes, pending]);
+
   if (error) return <div className={styles.empty}>{error}</div>;
   if (!ev || !lotes || !pending)
     return <div className={styles.empty}>Carregando…</div>;
 
   const lotePorId = new Map(lotes.map((l) => [l.id, l] as const));
+
+  const subtotal = pending.itens.reduce((acc, it) => {
+    const lote = lotePorId.get(it.loteId);
+    return acc + (lote ? lote.preco * it.quantidade : 0);
+  }, 0);
+  const totalComDesconto = cupom ? cupom.valor_final : subtotal;
+
+  const aplicarCupom = async () => {
+    if (subtotal <= 0) return;
+    setValidandoCupom(true);
+    setCupomErro(null);
+    try {
+      const validado = await validarCupom(ev.id, cupomCodigo.trim(), subtotal);
+      setCupom(validado);
+    } catch (err) {
+      setCupom(null);
+      setCupomErro(extractErrorMessage(err, "Não foi possível validar o cupom."));
+    } finally {
+      setValidandoCupom(false);
+    }
+  };
+
+  const removerCupom = () => {
+    setCupom(null);
+    setCupomCodigo("");
+    setCupomErro(null);
+  };
 
   const confirmar = async () => {
     if (!user) {
@@ -83,16 +134,14 @@ export const CheckoutPage = () => {
           quantidade: it.quantidade,
         })),
         metodo,
+        cupom_codigo: cupom?.codigo ?? null,
       });
-      setPedidoCriado(criado);
       sessionStorage.removeItem("pt_pending_order");
-      // Para PIX, ficamos na tela exibindo o QR. Para boleto/cartão, vai direto
-      // para a tela de confirmação com o link da fatura.
-      if (criado.pedido.status === "PAGO" || metodo !== "PIX") {
-        navigate(`/eventos/${ev.id}/ingressos`, {
-          state: { pedidoId: criado.pedido.id, invoiceUrl: criado.invoice_url },
-        });
-      }
+      // Vai para a tela de status, que mostra QR/fatura enquanto pendente e faz
+      // polling até o webhook do Asaas confirmar (ou recusar) o pagamento.
+      navigate(`/eventos/${ev.id}/pagamento/${criado.pedido.id}`, {
+        state: { invoiceUrl: criado.invoice_url, pixQrcode: criado.pix_qrcode },
+      });
     } catch (err) {
       setError(extractErrorMessage(err, "Falha ao criar o pedido."));
     } finally {
@@ -154,8 +203,8 @@ export const CheckoutPage = () => {
             </div>
             {metodo === "PIX" && (
               <div className={styles.metodoHint}>
-                Após confirmar, o QR Code do PIX aparecerá nesta tela.
-                Pagamento confirmado em segundos.
+                Após confirmar, você verá o QR Code do PIX e acompanhará a
+                confirmação do pagamento em tempo real.
               </div>
             )}
             {metodo === "CREDIT_CARD" && (
@@ -172,29 +221,6 @@ export const CheckoutPage = () => {
             )}
           </section>
 
-          {pedidoCriado?.pix_qrcode && (
-            <section className={styles.card}>
-              <h3 className={styles.cardTitle}>3 · Pague com PIX</h3>
-              <div className={styles.pixWrap}>
-                <img
-                  src={`data:image/png;base64,${pedidoCriado.pix_qrcode.encodedImage}`}
-                  alt="QR Code PIX"
-                  className={styles.pixQr}
-                />
-                <div>
-                  <div className={styles.metodoHint}>
-                    Escaneie o QR Code com o app do seu banco ou copie o código
-                    abaixo.
-                  </div>
-                  <textarea
-                    readOnly
-                    value={pedidoCriado.pix_qrcode.payload}
-                    className={styles.pixPayload}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
         </div>
 
         <aside>
@@ -212,22 +238,69 @@ export const CheckoutPage = () => {
                 </div>
               );
             })}
+            <div className={styles.cupomBox}>
+              <div className={styles.label}>Cupom de desconto</div>
+              {cupom ? (
+                <div className={styles.cupomAplicado}>
+                  <span>
+                    ✓ <strong>{cupom.codigo}</strong> aplicado
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.cupomRemover}
+                    onClick={removerCupom}
+                    disabled={submitting}
+                  >
+                    Remover
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.cupomRow}>
+                  <input
+                    className={styles.input}
+                    value={cupomCodigo}
+                    onChange={(e) => setCupomCodigo(e.target.value.toUpperCase())}
+                    placeholder="Digite o código"
+                    disabled={submitting}
+                  />
+                  <button
+                    type="button"
+                    className={styles.cupomBtn}
+                    onClick={aplicarCupom}
+                    disabled={!cupomCodigo.trim() || validandoCupom || submitting}
+                  >
+                    {validandoCupom ? "…" : "Aplicar"}
+                  </button>
+                </div>
+              )}
+              {cupomErro && <div className={styles.cupomErro}>⚠ {cupomErro}</div>}
+            </div>
+
+            {cupom && (
+              <>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryDim}>Subtotal</span>
+                  <span>{money(subtotal)}</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span className={styles.summaryDim}>Desconto</span>
+                  <span>−{money(cupom.valor_desconto_aplicado)}</span>
+                </div>
+              </>
+            )}
+
             <div className={styles.summaryTotal}>
               <span>Total</span>
-              <span>{money(pending.total)}</span>
+              <span>{money(totalComDesconto)}</span>
             </div>
             {error && <div className={styles.errorMsg}>⚠ {error}</div>}
             <button
               type="button"
               className={styles.cta}
               onClick={confirmar}
-              disabled={submitting || pedidoCriado !== null}
+              disabled={submitting}
             >
-              {submitting
-                ? "Criando pedido…"
-                : pedidoCriado
-                  ? "Aguardando pagamento"
-                  : "Confirmar pagamento"}
+              {submitting ? "Criando pedido…" : "Confirmar pagamento"}
             </button>
             <div className={styles.secure}>
               🔒 Conexão segura · Asaas Gateway

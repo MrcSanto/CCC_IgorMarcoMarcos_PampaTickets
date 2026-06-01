@@ -36,6 +36,7 @@ class IngressoResponse(BaseModel):
 
 class IngressoOrganizadorResponse(BaseModel):
     id: uuid.UUID
+    qr_code_hash: str
     status: StatusIngresso
     emitido_em: datetime
     lote_nome: str
@@ -48,6 +49,7 @@ class IngressoOrganizadorResponse(BaseModel):
     def from_ingresso(cls, ing: Ingresso) -> "IngressoOrganizadorResponse":
         return cls(
             id=ing.id,
+            qr_code_hash=ing.qr_code_hash,
             status=ing.status,
             emitido_em=ing.emitido_em,
             lote_nome=ing.lote.nome,

@@ -246,3 +246,69 @@
   font-size: 13px;
   margin-top: 12px;
 }
+
+.cupomBox {
+  border-top: 1px solid var(--pt-border);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.cupomRow {
+  display: flex;
+  gap: 8px;
+}
+
+.cupomRow .input {
+  text-transform: uppercase;
+}
+
+.cupomBtn {
+  background: var(--pt-bg-card-2);
+  border: 1px solid var(--pt-border);
+  color: var(--pt-text);
+  padding: 0 14px;
+  border-radius: var(--pt-r-md);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color var(--pt-t-fast);
+}
+
+.cupomBtn:hover:not(:disabled) {
+  border-color: var(--pt-accent);
+}
+
+.cupomBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cupomAplicado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--pt-accent-soft);
+  border: 1px solid var(--pt-accent);
+  border-radius: var(--pt-r-md);
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--pt-text);
+}
+
+.cupomRemover {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pt-text-dim);
+  text-decoration: underline;
+}
+
+.cupomRemover:hover {
+  color: var(--pt-text);
+}
+
+.cupomErro {
+  font-size: 12px;
+  color: #ff6b6b;
+  margin-top: 8px;
+}

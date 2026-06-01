@@ -35,6 +35,29 @@ export type CupomUpdate = Partial<{
   ativo: boolean;
 }>;
 
+// Resultado da validação pública de um cupom (UC07 — fluxo de compra do participante).
+export type CupomValidacao = {
+  cupom_id: string;
+  codigo: string;
+  tipo_desconto: TipoDesconto;
+  valor_desconto_aplicado: number;
+  valor_final: number;
+};
+
+// Valida o cupom para o evento e calcula o desconto sobre `valorBase` (subtotal).
+// Não persiste nada — o desconto só é efetivado quando o pedido é criado.
+export const validarCupom = async (
+  eventoId: string,
+  codigo: string,
+  valorBase: number,
+): Promise<CupomValidacao> => {
+  const { data } = await api.post<CupomValidacao>(
+    `/eventos/${eventoId}/cupons/validar`,
+    { codigo, valor_base: valorBase },
+  );
+  return data;
+};
+
 export const listarCupons = async (eventoId: string): Promise<Cupom[]> => {
   const { data } = await api.get<Cupom[]>(`/eventos/${eventoId}/cupons`);
   return data;

@@ -11,6 +11,7 @@ import { HomePage } from "./pages/participante/HomePage";
 import { SearchPage } from "./pages/participante/SearchPage";
 import { EventoPage } from "./pages/participante/EventoPage";
 import { CheckoutPage } from "./pages/participante/CheckoutPage";
+import { PagamentoStatusPage } from "./pages/participante/PagamentoStatusPage";
 import { TicketsPage } from "./pages/participante/TicketsPage";
 import { MyTicketsPage } from "./pages/participante/MyTicketsPage";
 
@@ -37,6 +38,10 @@ export const App = () => (
       <Route path="/eventos" element={<SearchPage />} />
       <Route path="/eventos/:id" element={<EventoPage />} />
       <Route path="/eventos/:id/checkout" element={<CheckoutPage />} />
+      <Route
+        path="/eventos/:id/pagamento/:pedidoId"
+        element={<PagamentoStatusPage />}
+      />
       <Route path="/eventos/:id/ingressos" element={<TicketsPage />} />
       <Route path="/meus-ingressos" element={<MyTicketsPage />} />
     </Route>
